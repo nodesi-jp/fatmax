@@ -1,0 +1,51 @@
+<!--
+  Pages のルートに置く1枚。**LP ではありません**——apt の設定を貼るためだけの紙です。
+  ここが無いと公開リポジトリのトップが 404 になり、壊れているように見えます。
+-->
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>fatmax — apt リポジトリ</title>
+<style>
+:root { color-scheme: light dark; }
+body { margin: 0; padding: 40px 22px 80px;
+       font: 15px/1.85 -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", system-ui, sans-serif;
+       max-width: 760px; margin-inline: auto; }
+h1 { font-size: 20px; margin: 0 0 4px; }
+h2 { font-size: 14px; margin: 34px 0 8px; letter-spacing: .02em; }
+p.sub { margin: 0 0 28px; opacity: .7; font-size: 13.5px; }
+pre { padding: 14px 16px; overflow-x: auto; border-radius: 6px;
+      background: rgba(127,127,127,.12);
+      font: 12.5px/1.75 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+small { opacity: .65; display: block; margin-top: 40px; font-size: 12px; line-height: 1.8; }
+</style>
+</head>
+<body>
+<h1>fatmax — apt リポジトリ</h1>
+<p class="sub">複数マシンの Claude Code CLI を1画面に集約する、LAN 専用のダッシュボード。</p>
+
+<h2>入れる</h2>
+<pre>curl -fsSL https://koujimorimoto-nodes.github.io/fatmax/KEY.gpg | sudo tee /usr/share/keyrings/fatmax.gpg > /dev/null
+echo "deb [signed-by=/usr/share/keyrings/fatmax.gpg] https://koujimorimoto-nodes.github.io/fatmax stable main" | sudo tee /etc/apt/sources.list.d/fatmax.list
+sudo apt update
+sudo apt install fatmax</pre>
+
+<h2>使う</h2>
+<pre>systemctl status fatmax
+# → http://&lt;このマシンの IP&gt;:8787/
+
+# 見たいマシンで1回だけ
+curl -fsSL http://&lt;ハブの IP&gt;:8787/setup.sh | sh</pre>
+
+<h2>詳しく</h2>
+<p><a href="https://koujimorimoto-nodes.github.io/fatmax/README.md">README</a></p>
+
+<small>
+認証はありません。LAN 内で使う前提です。対応は amd64 のみ。<br>
+Claude および Claude Code は Anthropic の商標です。本ソフトウェアは Anthropic とは無関係の
+第三者製ツールで、Anthropic による承認・提供を受けたものではありません。
+</small>
+</body>
+</html>

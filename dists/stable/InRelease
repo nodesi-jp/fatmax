@@ -1,0 +1,39 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Architectures: amd64
+Codename: stable
+Components: main
+Date: Mon, 10 Aug 2026 01:30:51 +0000
+Description: fatmax
+Label: fatmax
+Origin: fatmax
+Suite: stable
+MD5Sum:
+ 788430e1ea08fd83399cdcf5431c3aed             1163 main/binary-amd64/Packages
+ 5d58da93b6613fa42fdd60deadf708e0              840 main/binary-amd64/Packages.gz
+SHA1:
+ 3518147d18f6ee129fe67b3df27a1d4c4582f550             1163 main/binary-amd64/Packages
+ 445d81884b93cb427e7dfba4a0f452100fadf69b              840 main/binary-amd64/Packages.gz
+SHA256:
+ 6ed80094ef4aaddeeb38f281edccd7b89755a883fdaf5c0197505d1d0858b7bd             1163 main/binary-amd64/Packages
+ 5a6c59ce104c9ae2770c5be0b2e00063fc3a5c9bf3b54a77ac44bf434826fb05              840 main/binary-amd64/Packages.gz
+SHA512:
+ 3226574aca8b99a3e4095e23704ae62881b2339a8c7cc6346cff6c8422c767558ecd881caf9b4429efd9072ce205b5b38335fe8b3c624e7b82237d6640d5dff6             1163 main/binary-amd64/Packages
+ 066ef10a64bc015e70635661b0b151fa7490683529ccb43e8f5805b3411e3d793756a759cf1d69dd3f7cea3b4ba039467a10a649fdd98b85a8fbeb88e0dfaa4c              840 main/binary-amd64/Packages.gz
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEEwsnDRK/1fkgnS48E32q7I3V/GdkFAmp5KcsACgkQ32q7I3V/
+GdlLyRAAggGyDJCmoG/It2mfr9rK+v6mDxTLBz0tQzCUZx5iCEW9S/0Tv5gkBW2w
+did7+j3My10uQdwuf4nXjAR3JEVMrzjEBpmMO2PENF9r8bC5v/EMfysyj1OKHX0Z
+WvgkWdGdXw3Y8U2jb0fk6OLPSI1Z0xkf4Vh7PuyWDCAFM4Vjn+pXSfND4M62GM1Q
+WT9L/vekITYsjW77Eh3TdtbEODZWwakvi28Pej7Y5Jj8aIpVOVjd0dt5tUAN/sc5
+NhIoeuHECEHuJLdQ0qR5LlBg+lx8vWhhdX2UzkzNJzDd8Xd7F7DFXarhBikNi5RC
+KLSsiPagpx/aJqptDsaDdcNmUHds4GwAv9cxSbqImBq0QVBL97eZO0ulKA/OR2Yv
+7ik6mSSo1mATii3yuJlArDotH8eO4Yzde0SrTcDwk4L/WoRpbA3gJZvZXw61mY+M
+y34sFU5XSuIlF93Row5Tz7QPm7qgOGOG1rvvvoYUG8nxWF1dl6wVxoJEK9uHkiKC
+6agw4jW4Y7fcJkkO+Fn33bF1SgBEsEb3VH9lIH/NwvGLfrjCFCwTwywG+une/KgV
+KfUlh6XVaNm053kQem8L4qqWKr1ujZCXX04i1ov6KD0zkfxGFkiJOAg+S2HfatfA
+dcl36dwaXS2cYgNCGlv1IeZHWxiX9hiqwU7DjT7BPDXN04MhGMY=
+=Cpzd
+-----END PGP SIGNATURE-----
