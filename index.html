@@ -27,8 +27,8 @@ small { opacity: .65; display: block; margin-top: 40px; font-size: 12px; line-he
 <p class="sub">複数マシンの Claude Code CLI を1画面に集約する、LAN 専用のダッシュボード。</p>
 
 <h2>入れる</h2>
-<pre>curl -fsSL https://koujimorimoto-nodes.github.io/fatmax/KEY.gpg | sudo tee /usr/share/keyrings/fatmax.gpg > /dev/null
-echo "deb [signed-by=/usr/share/keyrings/fatmax.gpg] https://koujimorimoto-nodes.github.io/fatmax stable main" | sudo tee /etc/apt/sources.list.d/fatmax.list
+<pre>curl -fsSL https://nodesi-jp.github.io/fatmax/KEY.gpg | sudo tee /usr/share/keyrings/fatmax.gpg > /dev/null
+echo "deb [signed-by=/usr/share/keyrings/fatmax.gpg] https://nodesi-jp.github.io/fatmax stable main" | sudo tee /etc/apt/sources.list.d/fatmax.list
 sudo apt update
 sudo apt install fatmax</pre>
 
@@ -40,7 +40,7 @@ sudo apt install fatmax</pre>
 curl -fsSL http://&lt;ハブの IP&gt;:8787/setup.sh | sh</pre>
 
 <h2>詳しく</h2>
-<p><a href="https://koujimorimoto-nodes.github.io/fatmax/README.md">README</a></p>
+<p><a href="https://nodesi-jp.github.io/fatmax/README.md">README</a></p>
 
 <small>
 認証はありません。LAN 内で使う前提です。対応は amd64 のみ。<br>

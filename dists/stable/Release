@@ -1,20 +1,20 @@
 Architectures: amd64
 Codename: stable
 Components: main
-Date: Mon, 10 Aug 2026 01:30:51 +0000
+Date: Mon, 10 Aug 2026 02:50:21 +0000
 Description: fatmax
 Label: fatmax
 Origin: fatmax
 Suite: stable
 MD5Sum:
- 788430e1ea08fd83399cdcf5431c3aed             1163 main/binary-amd64/Packages
- 5d58da93b6613fa42fdd60deadf708e0              840 main/binary-amd64/Packages.gz
+ 183da18acc26cabc60c8d5103fcacb9a             1153 main/binary-amd64/Packages
+ 1a5aeb80720e1d06cdbf6260bb240464              833 main/binary-amd64/Packages.gz
 SHA1:
- 3518147d18f6ee129fe67b3df27a1d4c4582f550             1163 main/binary-amd64/Packages
- 445d81884b93cb427e7dfba4a0f452100fadf69b              840 main/binary-amd64/Packages.gz
+ 1252cebeb44f0eab38fd922287cef12348351491             1153 main/binary-amd64/Packages
+ 990513ae01424fd44aba695bd7ccf7c512568a1c              833 main/binary-amd64/Packages.gz
 SHA256:
- 6ed80094ef4aaddeeb38f281edccd7b89755a883fdaf5c0197505d1d0858b7bd             1163 main/binary-amd64/Packages
- 5a6c59ce104c9ae2770c5be0b2e00063fc3a5c9bf3b54a77ac44bf434826fb05              840 main/binary-amd64/Packages.gz
+ 9c999a27e0431dc65e6a24d5e31ee7515e550e9d44ef7db41df21092581798bb             1153 main/binary-amd64/Packages
+ addd5f5110f52b69c1e381c35e3537ad65102273d20b2e7acf921da439d8c912              833 main/binary-amd64/Packages.gz
 SHA512:
- 3226574aca8b99a3e4095e23704ae62881b2339a8c7cc6346cff6c8422c767558ecd881caf9b4429efd9072ce205b5b38335fe8b3c624e7b82237d6640d5dff6             1163 main/binary-amd64/Packages
- 066ef10a64bc015e70635661b0b151fa7490683529ccb43e8f5805b3411e3d793756a759cf1d69dd3f7cea3b4ba039467a10a649fdd98b85a8fbeb88e0dfaa4c              840 main/binary-amd64/Packages.gz
+ d74fd24508e773ed08907cabb729d422ae4e283cebfaa01384aa10329b5dfbe18625f9309bf0933b05b0fce8b37f2cffb7cfcc386b0e123af931c5019bc18631             1153 main/binary-amd64/Packages
+ 20d7226fca03e0fd84fd5581e878068dceab84cb40795d743d021edcefac644ab4ada1e86be7dc158e80e47fb12347b8cff2b697d6b83e62b3822004daf253e0              833 main/binary-amd64/Packages.gz

@@ -10,10 +10,10 @@
 
 ```sh
 # 1. 署名鍵
-curl -fsSL https://koujimorimoto-nodes.github.io/fatmax/KEY.gpg | sudo tee /usr/share/keyrings/fatmax.gpg > /dev/null
+curl -fsSL https://nodesi-jp.github.io/fatmax/KEY.gpg | sudo tee /usr/share/keyrings/fatmax.gpg > /dev/null
 
 # 2. 取得先
-echo "deb [signed-by=/usr/share/keyrings/fatmax.gpg] https://koujimorimoto-nodes.github.io/fatmax stable main" | sudo tee /etc/apt/sources.list.d/fatmax.list
+echo "deb [signed-by=/usr/share/keyrings/fatmax.gpg] https://nodesi-jp.github.io/fatmax stable main" | sudo tee /etc/apt/sources.list.d/fatmax.list
 
 # 3. 入れる
 sudo apt update
@@ -74,7 +74,7 @@ loginctl enable-linger "$USER"               # ログアウト後も動かすな
 | `fatmax` | 集約するハブ。UI と DB を内包 | 1台だけ |
 | `fatmax` | hook の中継（任意） | 見たいマシンそれぞれ |
 
-- 詳細: https://github.com/koujimorimoto-nodes/fatmax
+- 詳細: https://github.com/nodesi-jp/fatmax
 
 ---
 

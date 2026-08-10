@@ -5,13 +5,13 @@ Maintainer: fatmax <kouji_morimoto@nodesi.jp>
 Installed-Size: 5188
 Depends: adduser
 Filename: pool/main/f/fatmax/fatmax_0.1.5_amd64.deb
-Size: 1774016
-MD5sum: 129dfff95a1c6a1445624f63eb1a057d
-SHA1: 82900a06b503c3df4ce49d2b56d9183758e7ba9b
-SHA256: 343c4598fcd21b20984ff54356335d9d6e277de57f86041aea3f254b9a9739e1
+Size: 1774164
+MD5sum: 76657021310be3d1c050a1cf1b1c6304
+SHA1: 5a4300e6b996a5c760c331ee846ffb6823fc4424
+SHA256: d20b99697b3e6d2068ee58dfdbb340c3511752e119539ef775480f7021b85385
 Section: utils
 Priority: optional
-Homepage: https://github.com/koujimorimoto-nodes/fatmax
+Homepage: https://github.com/nodesi-jp/fatmax
 Description: Claude Code のセッションを1画面に集約する (LAN 専用)
  複数マシンで動く Claude Code CLI の状態・会話・コストを1画面に集めます。
  どのセッションが人間の許可待ちで止まっているかが分かります。
