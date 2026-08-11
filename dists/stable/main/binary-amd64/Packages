@@ -5,10 +5,10 @@ Maintainer: fatmax <kouji_morimoto@nodesi.jp>
 Installed-Size: 5256
 Depends: adduser
 Filename: pool/main/f/fatmax/fatmax_0.1.10_amd64.deb
-Size: 1789456
-MD5sum: 753946812ccdbb73ee5e17358787c207
-SHA1: bbb6a0caf26fa3249be929211be1c5118c917b05
-SHA256: c9c5c65248adf0540b4c7e1490647a50bc8ba3b1cbe2d16e699eeacbb67556d2
+Size: 1789532
+MD5sum: a449f25551e5dc3e1f99e99438e7a025
+SHA1: 5be9a29e6276fb21a768d3acc8f9596cb1c8fe68
+SHA256: 660ce1ddcbca20e8e08e4fb5e02a805da98c03fe660a8ab7b3cd710391e96330
 Section: utils
 Priority: optional
 Homepage: https://github.com/nodesi-jp/fatmax

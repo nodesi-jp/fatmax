@@ -26,14 +26,27 @@ small { opacity: .65; display: block; margin-top: 40px; font-size: 12px; line-he
 <h1>fatmax — apt リポジトリ</h1>
 <p class="sub">複数マシンの Claude Code CLI を1画面に集約する、LAN 専用のダッシュボード。</p>
 
-<h2>入れる</h2>
+<h2>install — Ubuntu / Debian</h2>
 <pre>curl -fsSL https://nodesi-jp.github.io/fatmax/KEY.gpg | sudo tee /usr/share/keyrings/fatmax.gpg > /dev/null
 echo "deb [signed-by=/usr/share/keyrings/fatmax.gpg] https://nodesi-jp.github.io/fatmax stable main" | sudo tee /etc/apt/sources.list.d/fatmax.list
 sudo apt update
 sudo apt install fatmax</pre>
 
+<h2>install — コンテナ（root・systemd 無し）</h2>
+<pre>curl -fsSL https://nodesi-jp.github.io/fatmax/KEY.gpg -o /usr/share/keyrings/fatmax.gpg
+echo "deb [signed-by=/usr/share/keyrings/fatmax.gpg] https://nodesi-jp.github.io/fatmax stable main" &gt; /etc/apt/sources.list.d/fatmax.list
+apt update &amp;&amp; apt install -y fatmax
+nohup fatmax hub &gt; /tmp/fatmax-hub.log 2&gt;&amp;1 &amp;</pre>
+
+<h2>install — macOS / dnf 系ほか</h2>
+<p class="sub">パッケージはありません。実行ファイルを置くだけです（musl 静的リンク）。</p>
+<pre>curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-macos-arm64  -o /usr/local/bin/fatmax   # macOS
+curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o /usr/local/bin/fatmax   # Linux amd64
+curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-aarch64 -o /usr/local/bin/fatmax  # Linux arm64
+chmod +x /usr/local/bin/fatmax &amp;&amp; fatmax hub</pre>
+
 <h2>使う</h2>
-<pre>systemctl status fatmax-hub
+<pre>fatmax status
 # → http://&lt;このマシンの IP&gt;:8787/
 
 # 見たいマシンで1回だけ
@@ -43,7 +56,7 @@ curl -fsSL http://&lt;ハブの IP&gt;:8787/setup.sh | sh</pre>
 <p><a href="https://nodesi-jp.github.io/fatmax/README.md">README</a></p>
 
 <small>
-認証はありません。LAN 内で使う前提です。対応は amd64 のみ。<br>
+認証はありません。LAN 内で使う前提です。Linux は amd64 / arm64、macOS は Apple Silicon。<br>
 Claude および Claude Code は Anthropic の商標です。本ソフトウェアは Anthropic とは無関係の
 第三者製ツールで、Anthropic による承認・提供を受けたものではありません。
 </small>
