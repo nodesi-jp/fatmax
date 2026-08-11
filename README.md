@@ -1,82 +1,70 @@
-# fatmax — apt リポジトリ
+# fatmax
 
-複数マシンで動く Claude Code CLI の状態・会話・コストを1画面に集約する、LAN 専用のダッシュボードです。
+複数マシンで動く Claude Code の状態・会話・コストを1画面に集めるダッシュボード。LAN 専用。
 
-**ここにはバイナリと索引しか置いていません**（ソースは含みません）。
+置いてあるのはバイナリと索引だけです（ソースは含みません）。**amd64 のみ**。
 
 ---
 
 ## 入れる
 
+集約する1台で:
+
 ```sh
-# 1. 署名鍵
 curl -fsSL https://nodesi-jp.github.io/fatmax/KEY.gpg | sudo tee /usr/share/keyrings/fatmax.gpg > /dev/null
-
-# 2. 取得先
 echo "deb [signed-by=/usr/share/keyrings/fatmax.gpg] https://nodesi-jp.github.io/fatmax stable main" | sudo tee /etc/apt/sources.list.d/fatmax.list
-
-# 3. 入れる
 sudo apt update
-sudo apt install fatmax      # 集約する1台だけ
+sudo apt install fatmax
 ```
 
 署名済みです。
 
-入れると `fatmax` が systemd のサービスとして起動し、`0.0.0.0:8787` で待ち受けます。
+`http://<そのマシンの IP>:8787/` が開きます。
 
 ```sh
-systemctl status fatmax
+systemctl status fatmax-hub
 ```
-
-ブラウザで `http://<そのマシンの IP>:8787/` を開いてください。
 
 ## 見たいマシンを繋ぐ
 
-**監視される側には何も置きません。** ハブの画面に出る1行を叩くだけです。
+**繋ぐ側には何も置きません。** そのマシンで1回だけ:
 
 ```sh
 curl -fsSL http://<ハブの IP>:8787/setup.sh | sh
 ```
 
-`~/.claude/settings.json` に hook と statusLine が入ります。抜くのも1コマンドです。
+`~/.claude/settings.json` に1行入るだけです（`--uninstall` で抜けます）。
 
-## 中継（任意）
+## そのマシンの「実行中に差し込んだ指示」も見たい場合
 
-ハブが落ちている間のイベントを溜め、実行中に差し込んだ指示も拾えるようになります。
-入れなくても hook はハブへ直接届きます。
+hook では取れないぶんで、`~/.claude/projects` を読む必要があります。読めるのは
+**あなたのユーザで動くプロセス**だけなので、次のどちらかにしてください。
 
 ```sh
-sudo apt install fatmax
+# 1台で完結するなら —— ハブを自分のユーザで動かす
+sudo systemctl disable --now fatmax-hub
+systemctl --user enable --now fatmax-hub
 
-# 送り先を書く（既定は自分自身なので、ハブが別マシンなら必須）
-sudoedit /etc/fatmax/relay.conf        # HUB=http://192.168.0.19:8787
+# 複数マシンを見るなら —— そのマシンに中継を置く
+sudoedit /etc/fatmax/relay.conf          # HUB=http://<ハブの IP>:8787
+systemctl --user enable --now fatmax-relay
 
-# 自分のユーザで起動する（root ではありません）
-systemctl --user enable --now fatmax
-loginctl enable-linger "$USER"               # ログアウト後も動かすなら
+loginctl enable-linger "$USER"           # どちらもログアウト後に止めないため
 ```
 
-`~/.claude/projects` を読むため、**ユーザ単位のサービス**として動かします。
+既定の `fatmax-hub`（system サービス）は専用ユーザで動くのでホームを読めません。
+この機能だけが出ないだけで、会話・許可待ち・コストは通常どおり記録されます。
 
 ## 知っておくこと
 
-- **認証はありません。** LAN 内で使う前提です。インターネットに出さないでください
-- 記録は `/var/lib/fatmax/fatmax.db`（SQLite ファイル1個）。**アンインストールしても消しません**
-- 集めるのは、会話の本文・ツールの実行記録・トークンとコスト・マシン名です。
+- **認証はありません。** LAN の外に出さないでください
+- 集めるのは**会話の本文**・ツールの実行記録・トークンとコスト・マシン名です。
   見られたくない会話があるマシンには入れないでください
-- 対応は **amd64 のみ**です（arm64 はまだ作っていません）
-- 版はビルド日時です。`fatmax --version` で確かめられます
-
-## 中身
-
-| パッケージ | 何をするか | どこに置くか |
-|---|---|---|
-| `fatmax` | 集約するハブ。UI と DB を内包 | 1台だけ |
-| `fatmax` | hook の中継（任意） | 見たいマシンそれぞれ |
-
-- 詳細: https://github.com/nodesi-jp/fatmax
+- 記録は `/var/lib/fatmax/fatmax.db` に残ります（アンインストールしても消しません）
 
 ---
+
+https://github.com/nodesi-jp/fatmax
 
 Claude および Claude Code は Anthropic の商標です。本ソフトウェアは Anthropic とは無関係の
 第三者製ツールで、Anthropic による承認・提供を受けたものではありません。

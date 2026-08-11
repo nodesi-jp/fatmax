@@ -4,36 +4,36 @@ Hash: SHA512
 Architectures: amd64
 Codename: stable
 Components: main
-Date: Mon, 10 Aug 2026 02:50:21 +0000
+Date: Mon, 10 Aug 2026 23:43:38 +0000
 Description: fatmax
 Label: fatmax
 Origin: fatmax
 Suite: stable
 MD5Sum:
- 183da18acc26cabc60c8d5103fcacb9a             1153 main/binary-amd64/Packages
- 1a5aeb80720e1d06cdbf6260bb240464              833 main/binary-amd64/Packages.gz
+ eab5b2e769cd383a82b81b8e88afdccd             1153 main/binary-amd64/Packages
+ d5f7370b7985fdc97514a8592ba257aa              836 main/binary-amd64/Packages.gz
 SHA1:
- 1252cebeb44f0eab38fd922287cef12348351491             1153 main/binary-amd64/Packages
- 990513ae01424fd44aba695bd7ccf7c512568a1c              833 main/binary-amd64/Packages.gz
+ 2f68adf8b5308bf50918dab44cbfefe9c40db99b             1153 main/binary-amd64/Packages
+ 21f4aca563f11ea8bedb8e2570eea16dc4550698              836 main/binary-amd64/Packages.gz
 SHA256:
- 9c999a27e0431dc65e6a24d5e31ee7515e550e9d44ef7db41df21092581798bb             1153 main/binary-amd64/Packages
- addd5f5110f52b69c1e381c35e3537ad65102273d20b2e7acf921da439d8c912              833 main/binary-amd64/Packages.gz
+ 3016ab9ec36d8af63e7913c12a103bf859d9e435d15134030cbe22bec0c9fef2             1153 main/binary-amd64/Packages
+ 94b254fcd2954211c7a14dc7e7365157aa0a3805e01e3443ff96ead3d6560a6b              836 main/binary-amd64/Packages.gz
 SHA512:
- d74fd24508e773ed08907cabb729d422ae4e283cebfaa01384aa10329b5dfbe18625f9309bf0933b05b0fce8b37f2cffb7cfcc386b0e123af931c5019bc18631             1153 main/binary-amd64/Packages
- 20d7226fca03e0fd84fd5581e878068dceab84cb40795d743d021edcefac644ab4ada1e86be7dc158e80e47fb12347b8cff2b697d6b83e62b3822004daf253e0              833 main/binary-amd64/Packages.gz
+ d9e4bd72e1ae906894376d5844958f0c55ca1b6cf7a8014fabbec057efab3c5611a314cc2feef05475c9815541814c5ad8a20edd8d49bac4206ddfe5b2f4b985             1153 main/binary-amd64/Packages
+ 8d311f0388bc4b46f81c053aeb6097258ad27e4f11726ddb86536c6cf99ae1eefa51d8b1c42fbd48e7dc71fcfd8451bf27338a00d32797d76b87e5133e837d62              836 main/binary-amd64/Packages.gz
 -----BEGIN PGP SIGNATURE-----
 
-iQIzBAEBCgAdFiEEmeQh7Y7jI1Gx26UlyP0J74P39IMFAmp5PG0ACgkQyP0J74P3
-9INfwBAAhqgimF9ZxdtMbEpMWQbKyQUuK3zT4SWoqLsQ+P1QgmraVp5WbMIgefCu
-8IO7pwYQ7sgMdLUjtr6A9JSIjVzg5aHq82s8jgzvbNEa/ickWJMGHJxPCx5fMUmp
-mUFsrmZqr437ZQCSnk/pxtsRv0KJUH7mnIAZGC8w8urQYKFyq7CUqeO9leMSMkTW
-NjTUbvLyVdQm94hAMCZqZsFaUz3lAFp3ud0aNn2jCCZtMq83D4lxqEEDD37a0wYc
-7r/gaLo1LgqlBPq7qCNNhLXcnxUWdYJbpfHXb4Fl03Tef6QzXrpZA/EQZIBU3u7B
-1okfRFYNuGVmD7Bd1nR+qzLRDGE5noXdHhc8ujZkWMeLkFM+IS4mDG4nW4b+u0f2
-iInSYqwmVg3mNxYbMnjSg/QYn/6WbszBKHkujm2o+IFKTrWnUEZTrxFSJmg0VPti
-mmST6tkvA8lbRPXhsu2F2J2IWR0H8hdMWOiV1DEfFWtU/2CnzS357THMhM0rSZrz
-0zv4Hm2xPE6ngujExAVnDGo3eLai0wUjVX2xWqadnto9LaM3tAG0nD55FXq3KL8g
-jCYXgiC7qOdobQMo0jqU1E9+v7KFdRZbsYCaO2+PO8usQ5hDfKNuBoY+mbzCUD9N
-N82Uvd182ZSxgur9w1yL4UAukQdA1BGtlc20ZQ7RHRZ18z8BchQ=
-=7VdG
+iQIzBAEBCgAdFiEEmeQh7Y7jI1Gx26UlyP0J74P39IMFAmp6YioACgkQyP0J74P3
+9IPXhRAAsZmS9hAoNiQhJCJfAErf2tHgmz6WR/tY6Fr8waB32skK6UElVUmOfg2h
+0bPHKrDwOQ9D2FzT2CtV9SGxk+nXYF0TnKsx5WX2lQvvJbF5U4ArPCwAFRpOzzua
+3QGgeiOddFNs37OEOkXOwlj8W9yQrK8QdUe3J2yGDvBheJpS/M3Ew12kdFFfC8Ow
+QwsDixahFY0hJzmdDsLvN82w6oKA/bCITveY6k5CJBPw5rX5Q3JSBQGi+CqfK5Zf
+4FnwCA9/ZsQ7BdzPhns4Ssr2n7klLKNlsHhJuYPUuTlEmmW3o1RzyMUhWk6ysUTK
+ji3wHMaCBk6GaqKcG6M7mxiYPMtRL/eE4lBolnUjB2Xk0C1Q3f6WH5twJdc6JQZ0
+o+RxJQgHs0xjOCF/mERaGZtbeRqbQhJp+oGyQQVUdFaG9pqWoNNqFCiZxo3hg1Ky
+REtoltC4ZUZ+QbGIShQxtjjQQkLHez2oosNT68lkTTJO549nsk9D0dioID1yawnV
+fq+hC4+XkhSghp80kR/UD7Cweo3VwP03Uu1Q7CTb9sj/Rrh9GvaDtfdMHPE+wEpA
+Eo+lSw20+8JZ2HQnj9BwkEErCKM0cqEZGOp5FCa/Uqq0BRTcDvl7gOj3pYGEyxV5
+LEidILq/CiMhCvSi5GvdOh5h/iLu6dnm1RlTdvouBGNxVRCrdLo=
+=owOk
 -----END PGP SIGNATURE-----
