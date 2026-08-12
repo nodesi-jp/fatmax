@@ -108,17 +108,29 @@ nohup fatmax hub > /tmp/fatmax-hub.log 2>&1 &
 **実行ファイルを1つ置くだけ**です。**`.rpm` はまだありません**ので、dnf 系もこの方法です。
 musl 静的リンクなので、ディストリを選びません。
 
+**dnf 系（Amazon Linux / Fedora / RHEL、amd64）**——そのまま貼れます。
+
+```sh
+curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o /usr/local/bin/fatmax
+chmod +x /usr/local/bin/fatmax
+fatmax hub
+```
+
+**macOS（Apple Silicon）**
+
 ```sh
 curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-macos-arm64 -o /usr/local/bin/fatmax
 chmod +x /usr/local/bin/fatmax
 fatmax hub
 ```
 
-| 入れる先 | ファイル名 |
-|---|---|
-| macOS（Apple Silicon） | `fatmax-macos-arm64` |
-| Linux x86_64 | `fatmax-linux-x86_64` |
-| Linux arm64 | `fatmax-linux-aarch64` |
+CPU は `uname -m` で分かります。ファイル名は次のとおりです。
+
+| 入れる先 | CPU（`uname -m`） | ファイル名 |
+|---|---|---|
+| Linux（dnf 系ほか） | `x86_64` | `fatmax-linux-x86_64` |
+| Linux（dnf 系ほか） | `aarch64` | `fatmax-linux-aarch64` |
+| macOS | `arm64` | `fatmax-macos-arm64` |
 
 <details>
 <summary>「開発元を確認できません」と出たら / 中身を確かめたい</summary>
