@@ -206,6 +206,34 @@ fatmax status
 
 動いているか・届いているか・読めているかが出ます。`⚠` や `✗` なら、その下に理由と直し方が付きます。
 
+## 新しい版に上げる
+
+```sh
+sudo apt update && sudo apt install --only-upgrade fatmax   # dnf 系は sudo dnf upgrade fatmax
+
+sudo systemctl restart fatmax-hub          # ハブを system で動かしている場合
+systemctl --user restart fatmax-hub        # あなたのユーザで動かしている場合
+systemctl --user restart fatmax-relay      # 中継を入れている場合
+
+fatmax status
+```
+
+**入れ替わるのはファイルだけです。** 動いているプロセスは古い実行ファイルを掴んだままなので、
+**自分で再起動するまで版は変わりません**（入れた瞬間に勝手に上げ下げしない、という方針のためです）。
+
+再起動を忘れると `fatmax status` がこう言います。**出なければ入れ替わっています。**
+
+```
+⚠ 動いているのは 0.1.17 (…)。手元の実行ファイルは 0.1.29 (…)（再起動していません）
+```
+
+`systemctl status fatmax-hub` に版は出ません（`Description` は固定の文字列です）。
+再起動した直後なら起動ログの1行目に出るので、その下の journal に見えます。
+確実に見るなら `fatmax status` か `curl -s localhost:8787/healthz` です。
+
+設定（`/etc/fatmax/hub.conf`・`/etc/fatmax/relay.conf`）と記録（`/var/lib/fatmax/fatmax.db`）は
+**更新で上書きされません**。
+
 ## アンインストール（uninstall）
 
 **見たいマシン**（繋いだだけのマシン）:
