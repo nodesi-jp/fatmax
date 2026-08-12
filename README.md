@@ -72,53 +72,40 @@ fatmax が**気づかせます**。人間の無駄時間をゼロに近づける
 
 ## install
 
-入れる先で手順が変わります。**集約するのは1台だけ**で、他のマシンは繋ぐだけです。
-配っているのは Linux（amd64 / arm64）と macOS（Apple Silicon）です。
+**入れるのは集約する1台だけ**です。見たいマシンには何も置きません（→ [見たいマシンを繋ぐ](#見たいマシンを繋ぐ)）。
+いま配っているのは `0.1.17` です。
 
-### Ubuntu / Debian（apt）
-
-CPU は apt が自動で選びます。
+### Ubuntu / Debian
 
 ```sh
 curl -fsSL https://nodesi-jp.github.io/fatmax/KEY.gpg | sudo tee /usr/share/keyrings/fatmax.gpg > /dev/null
 echo "deb [signed-by=/usr/share/keyrings/fatmax.gpg] https://nodesi-jp.github.io/fatmax stable main" | sudo tee /etc/apt/sources.list.d/fatmax.list
-sudo apt update
-sudo apt install fatmax
-```
-
-署名済みです。
-
-**入れただけでは何も動きません。** 集約する1台で、上げてください。
-
-```sh
+sudo apt update && sudo apt install fatmax
 sudo systemctl enable --now fatmax-hub
-systemctl status fatmax-hub
 ```
 
-`http://<そのマシンの IP>:8787/` が開きます。**上げるのは1台だけです。**
-認証が無いので、入れた全台で上がると、意図しない待ち受けがそのぶん増えます。
+CPU（amd64 / arm64）は apt が選びます。署名済みです。
+**入れただけでは動きません。**最後の1行で上げます。`http://<このマシンの IP>:8787/` が開きます。
 
-### コンテナ（root・sudo も systemd も無い）
+> **上げるのは1台だけ**です。認証が無いので、入れた全台で上げると待ち受けがそのぶん増えます。
 
-`sudo` は要りません（もう root なので）。**サービスにもならない**ので、自分で起動します。
+<details>
+<summary>root のコンテナ（sudo も systemd も無い場合）</summary>
+
+`sudo` を外し、最後の1行の代わりに自分で起動します。
 
 ```sh
-curl -fsSL https://nodesi-jp.github.io/fatmax/KEY.gpg -o /usr/share/keyrings/fatmax.gpg
-echo "deb [signed-by=/usr/share/keyrings/fatmax.gpg] https://nodesi-jp.github.io/fatmax stable main" > /etc/apt/sources.list.d/fatmax.list
-apt update && apt install -y fatmax
-
 nohup fatmax hub > /tmp/fatmax-hub.log 2>&1 &
 ```
 
-記録は既定で `~/.fatmax/fatmax.db`（コンテナの中）です。**作り直すと消えます。**
-残すならマウント先を指してください（例 `--db /workspaces/.fatmax/fatmax.db`）。
+記録は `~/.fatmax/fatmax.db`（コンテナの中）で、**作り直すと消えます**。残すならマウント先を
+指してください（`--db /workspaces/.fatmax/fatmax.db`）。画面を見るには 8787 をホストへ転送します
+（devcontainer なら PORTS タブ、素の docker なら `-p 8787:8787`）。
+</details>
 
-画面を見るには、そのコンテナの 8787 をホストへ転送する必要があります
-（VS Code の devcontainer なら PORTS タブ、素の docker なら `-p 8787:8787`）。
+### macOS / その他の Linux
 
-### macOS（Apple Silicon）
-
-パッケージはありません。実行ファイルを1つ置くだけです。
+**実行ファイルを1つ置くだけ**です（`.rpm` はまだありません）。
 
 ```sh
 curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-macos-arm64 -o /usr/local/bin/fatmax
@@ -126,21 +113,31 @@ chmod +x /usr/local/bin/fatmax
 fatmax hub
 ```
 
-初回は「開発元を確認できません」と出ます。**署名していないため**で、中身の問題ではありません。
-`xattr -d com.apple.quarantine /usr/local/bin/fatmax` で外せます。
+| 入れる先 | ファイル名 |
+|---|---|
+| macOS（Apple Silicon） | `fatmax-macos-arm64` |
+| Linux x86_64 | `fatmax-linux-x86_64` |
+| Linux arm64 | `fatmax-linux-aarch64` |
 
-### dnf 系（Amazon Linux / Fedora / RHEL）ほか
+<details>
+<summary>「開発元を確認できません」と出たら / 中身を確かめたい</summary>
 
-**.rpm はまだありません。** 実行ファイルは musl 静的リンクなので、置けばそのまま動きます。
+署名していないためで、中身の問題ではありません。`xattr -d com.apple.quarantine /usr/local/bin/fatmax` で外せます。
+
+ハッシュは https://nodesi-jp.github.io/fatmax/bin/SHA256SUMS にあります（**この経路には署名が掛かりません**。
+署名が要るなら apt を使ってください）。
+</details>
+
+### 次に —— 見たいマシンを繋ぐ
+
+ハブが上がったら、**見たいマシンそれぞれで1回だけ**叩きます。ハブの IP を入れてください。
 
 ```sh
-curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o /usr/local/bin/fatmax   # arm64 は fatmax-linux-aarch64
-chmod +x /usr/local/bin/fatmax
-fatmax hub
+curl -fsSL http://192.168.0.19:8787/setup.sh | sh
 ```
 
-`https://nodesi-jp.github.io/fatmax/bin/SHA256SUMS` にハッシュを置いてあります（この経路には署名が掛かりません）。
-systemd で常駐させたい場合は、unit を自分で書いてください。
+置くものはありません。`settings.json` に hook と statusLine が入るだけです
+（詳しくは [見たいマシンを繋ぐ](#見たいマシンを繋ぐ)）。
 
 ---
 
@@ -176,13 +173,16 @@ hook では取れません）。
 
 ### コンテナなど、パッケージを使わないマシン
 
+**実行ファイルはここから落とします**（ハブからではありません。理由は下）。
+
 ```sh
-curl -fsSL http://<ハブの IP>:8787/relay/bin/linux -o /tmp/fatmax
+curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o /tmp/fatmax   # arm64 は fatmax-linux-aarch64
 chmod +x /tmp/fatmax
 nohup /tmp/fatmax relay --hub http://<ハブの IP>:8787 > /tmp/fatmax.log 2>&1 &
 ```
 
 Docker Desktop の中からホストのハブを見るなら、`<ハブの IP>` は `host.docker.internal` です。
+CPU は `uname -m` で分かります（`x86_64` / `aarch64`）。
 
 **`relay` を省けません。** 実行ファイルは1個（`hub` / `relay` / `status`）で、役目を書かないと
 `不明な役目: --hub` で止まります。**黙ってハブとして起動しません**——中継のつもりのマシンで
@@ -190,6 +190,11 @@ Docker Desktop の中からホストのハブを見るなら、`<ハブの IP>` 
 
 `/tmp` にしてあるのは、置き場所を決めさせるとそこで手が止まるからです。引き換えに再起動で消えます。
 `/tmp` が `noexec` の環境では `Permission denied` になるので、`$HOME` の下に置いてください。
+
+> **ハブからは落とせません。** 以前はハブが各プラットフォームの実行ファイルを内蔵して
+> `/relay/bin/…` で配っていましたが、**やめました**（ハブが 10MB → 4.7MB）。
+> いまの `/relay/bin/…` はハブの隣にファイルがあるときだけ応え、apt で入れたハブでは 404 です。
+> 配る場所をここ1つに寄せてあるので、版がズレる余地もありません。
 
 ### 動いているか
 
@@ -200,20 +205,26 @@ fatmax status
 
 ## そのマシンの「実行中に差し込んだ指示」も見たい場合
 
-hook では取れないぶんで、`~/.claude/projects` を読む必要があります。読めるのは
-**あなたのユーザーで動くプロセス**だけなので、次のどちらかにしてください。
+返事を待たずに打ち込んだ指示は hook が発火しないので、`~/.claude/projects` を読んで補っています。
+**条件は1つだけ**——それを読むプロセスが**あなたのユーザーで動いていること**です。
+
+**サービスにする必要はありません。** 端末で動かせば、それで読めます。
 
 ```sh
-# 1台で完結するなら —— ハブを自分のユーザーで動かす
-sudo systemctl disable --now fatmax-hub
-systemctl --user enable --now fatmax-hub
-loginctl enable-linger "$USER"           # ログアウト後に止めないため
+fatmax hub                                   # 1台で完結するなら、これだけ
+fatmax relay --hub http://<ハブの IP>:8787   # 複数マシンを見るなら、そのマシンで中継を
 ```
 
-複数マシンを見るなら、そのマシンに**中継を置きます**（上の「中継（リレー）を起動する」）。
+サービスにするのは「ログアウトしても動き続けてほしい」ときだけです。
 
-既定の `fatmax-hub`（system サービス）は専用ユーザーで動くのでホームを読めません。
-この機能だけが出ないだけで、会話・許可待ち・コストは通常どおり記録されます。
+```sh
+sudo systemctl disable --now fatmax-hub      # apt が入れた system 版を止めて
+systemctl --user enable --now fatmax-hub     # 自分のユーザーで上げ直す
+loginctl enable-linger "$USER"
+```
+
+apt が入れる `fatmax-hub` は**専用ユーザー**で動くので、あなたのホームを読めません。
+**この補完が出ないだけ**で、会話・許可待ち・コストは通常どおり記録されます。
 
 ## 確認
 
@@ -223,12 +234,38 @@ fatmax status
 
 動いているか・届いているか・読めているかが出ます。`⚠` や `✗` なら、その下に理由と直し方が付きます。
 
+## やめる
+
+**見たいマシン**（繋いだだけのマシン）:
+
+```sh
+curl -fsSL http://<ハブの IP>:8787/setup.sh | sh -s -- --uninstall
+```
+
+`settings.json` から fatmax の hook と statusLine だけを外します。あなた自身の設定は残ります。
+
+**集約する1台**:
+
+```sh
+sudo systemctl disable --now fatmax-hub      # 止めるだけならここまで
+systemctl --user disable --now fatmax-relay  # 中継を置いていたら（user サービスなので各自で）
+sudo apt purge fatmax
+```
+
+**記録は消えません。** `purge` でも残します——日別の集計を生イベントから積み直しているので、
+消すと過去のコストも会話も戻らないためです。消すなら自分で:
+
+```sh
+sudo rm -rf /var/lib/fatmax
+```
+
 ## 知っておくこと
 
 - **認証はありません。** LAN の外に出さないでください
 - 集めるのは**会話の本文**・ツールの実行記録・トークンとコスト・マシン名です。
   見られたくない会話があるマシンには入れないでください
-- 記録は `/var/lib/fatmax/fatmax.db` に残ります（アンインストールしても消しません）
+- 記録の置き場は入れ方で変わります。apt（system サービス）なら `/var/lib/fatmax/fatmax.db`、
+  実行ファイルを自分で動かしたなら `~/.fatmax/fatmax.db`
 
 ---
 
