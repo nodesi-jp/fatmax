@@ -283,23 +283,6 @@ fatmax status --hub http://host.docker.internal:8787
 
 ---
 
-## トークルームも使う場合（任意）
-
-セッションどうしを会話させるなら、**会話担当エージェント**を入れます。
-hook とは別物で、**入れなくても記録は取れます**。
-
-```sh
-mkdir -p ~/.claude/agents
-curl -fsSL http://host.docker.internal:8787/agents/room-talker.md -o ~/.claude/agents/room-talker.md
-```
-
-**宛先は `setup.sh` を叩いたときと同じ**です。入れたら **Claude Code を開き直してください。**
-
-- **部屋に入れるコンテナそれぞれに入れます。** `~/.claude` はコンテナごとに別なので、\n  1つ入れても他のコンテナには効きません。作り直すと消えるため、`postStartCommand` に入れておくと楽です\n- **会話そのものはリレー（`127.0.0.1:8788`）が通します。** 定義が毎回自分で宛先を決めます
-- 一覧と Windows 版の入れ方は `http://host.docker.internal:8787/agents` にあります
-
----
-
 ## うまくいかないとき
 
 | 症状 | 見るところ |
@@ -310,7 +293,6 @@ curl -fsSL http://host.docker.internal:8787/agents/room-talker.md -o ~/.claude/a
 | コンテナからハブが見えない | SSH が切れている / `GatewayPorts` / `--add-host`。EC2 上で `ss -tlnp \| grep 8787` |
 | 回数とコストが倍 | hook が2箇所（user と project）に入っています。片方を `--uninstall` |
 | 実行中に差し込んだ指示が出ない | `fatmax status` の `⚠ ~/.claude/projects が読めません`。リレーを Claude Code と**同じコンテナ・同じユーザー**で動かす |
-| 部屋に入れない | そのコンテナに `~/.claude/agents/room-talker.md` がありません（[上](#トークルームも使う場合任意)） |
 
 ---
 

@@ -127,23 +127,6 @@ fatmax status
 
 ---
 
-## トークルームも使う場合（任意）
-
-セッションどうしを会話させるなら、**会話担当エージェント**を入れます。
-hook とは別物で、**入れなくても記録は取れます**。
-
-```sh
-mkdir -p ~/.claude/agents
-curl -fsSL http://127.0.0.1:8787/agents/room-talker.md -o ~/.claude/agents/room-talker.md
-```
-
-**宛先は `setup.sh` を叩いたときと同じ**です。入れたら **Claude Code を開き直してください。**
-
-- **部屋に入れるコンテナそれぞれに入れます。** `~/.claude` はコンテナごとに別です
-- 一覧と Windows 版の入れ方は `http://127.0.0.1:8787/agents` にあります
-
----
-
 ## うまくいかないとき
 
 | 症状 | 見るところ |
@@ -153,7 +136,6 @@ curl -fsSL http://127.0.0.1:8787/agents/room-talker.md -o ~/.claude/agents/room-
 | 昨日まで届いていたのに止まった | コンテナの IP が変わって、hook に焼かれた宛先が古い。`setup.sh` を叩き直す |
 | 回数とコストが倍 | hook が2箇所（user と project）に入っています。片方を `--uninstall` |
 | 実行中に差し込んだ指示が出ない | `fatmax status` の `⚠ ~/.claude/projects が読めません`。**Claude Code と同じユーザー**でハブを動かす |
-| 部屋に入れない | `~/.claude/agents/room-talker.md` がありません（[上](#トークルームも使う場合任意)） |
 
 ---
 
