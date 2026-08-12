@@ -36,7 +36,8 @@ sudo apt install fatmax</pre>
 <pre>curl -fsSL https://nodesi-jp.github.io/fatmax/KEY.gpg -o /usr/share/keyrings/fatmax.gpg
 echo "deb [signed-by=/usr/share/keyrings/fatmax.gpg] https://nodesi-jp.github.io/fatmax stable main" &gt; /etc/apt/sources.list.d/fatmax.list
 apt update &amp;&amp; apt install -y fatmax
-nohup fatmax hub &gt; /tmp/fatmax-hub.log 2&gt;&amp;1 &amp;</pre>
+mkdir -p .fatmax    # ワークスペースの直下で。ここ以外はコンテナを作り直すと消えます
+nohup fatmax hub --db "$PWD/.fatmax/fatmax.db" &gt; /tmp/fatmax-hub.log 2&gt;&amp;1 &amp;</pre>
 
 <h2>install — Amazon Linux / Fedora / RHEL（dnf）</h2>
 <pre>sudo curl -fsSL https://nodesi-jp.github.io/fatmax/dnf/fatmax.repo -o /etc/yum.repos.d/fatmax.repo

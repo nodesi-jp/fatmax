@@ -32,8 +32,10 @@ CPU（amd64 / arm64）は apt が選びます。署名済みです。
 nohup fatmax hub > /tmp/fatmax-hub.log 2>&1 &
 ```
 
-記録は `~/.fatmax/fatmax.db`（コンテナの中）で、**作り直すと消えます**。残すならマウント先を
-指してください（`--db /workspaces/.fatmax/fatmax.db`）。画面を見るには 8787 をホストへ転送します
+記録は `~/.fatmax/fatmax.db`（コンテナの中）で、**作り直すと消えます**。残すなら
+**ワークスペースの中**を指してください（`--db "$PWD/.fatmax/fatmax.db"` をその直下で）。
+マウントされているのは `/workspaces/<フォルダ名>` **だけ**で、その隣の `/workspaces/.fatmax` は
+コンテナの中です。画面を見るには 8787 をホストへ転送します
 （devcontainer なら PORTS タブ、素の docker なら `-p 8787:8787`）。
 </details>
 

@@ -26,7 +26,7 @@ flowchart LR
     CC["Claude Code"]
     H["fatmax hub<br/>:8787"]
     T[("~/.claude/projects")]
-    DB[("~/.fatmax/fatmax.db")]
+    DB[("ワークスペースの .fatmax/<br/>fatmax（実行ファイル）+ fatmax.db")]
     CC -->|"hook 127.0.0.1:8787"| H
     H -.->|読む| T
     H --> DB
@@ -39,10 +39,37 @@ flowchart LR
 
 ## 1. 実行ファイルを置く
 
+**ワークスペースの中の `.fatmax/` に置きます。** コンテナの中（`/usr/local/bin` など）に
+置くと **Rebuild で消えます**。ワークスペースのフォルダだけは手元のディスクを
+マウントしたものなので、作り直しても残ります。**記録（DB）も同じ場所に置きます**
+（3. で指定）。
+
+VS Code のターミナルは**ワークスペースの直下**で開きます。そこで叩いてください。
+
 ```sh
-curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o /usr/local/bin/fatmax
-chmod +x /usr/local/bin/fatmax
+mkdir -p .fatmax
+curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o .fatmax/fatmax
+chmod +x .fatmax/fatmax
+ln -sf "$PWD/.fatmax/fatmax" /usr/local/bin/fatmax     # `fatmax` と打てるようにする
 ```
+
+- **`/workspaces/.fatmax` ではありません。** マウントされているのは
+  `/workspaces/<フォルダ名>` **だけ**で、その隣はコンテナの中です（作り直すと消えます）
+- **`.gitignore` に足してください。** DB には**会話の中身がそのまま入ります**。
+  実行ファイルも 4.7MB あります
+
+  ```sh
+  echo '/.fatmax/' >> .gitignore
+  ```
+
+- 最後の `ln -sf` だけはコンテナの中に作るので Rebuild で消えます。
+  実体は残っているので張り直すだけです（後述の `postStartCommand` がやります）
+- **新しい版に上げるときは消して取り直します。** 残るということは、
+  黙って古いまま使い続けるということでもあります
+
+  ```sh
+  rm .fatmax/fatmax && curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o .fatmax/fatmax && chmod +x .fatmax/fatmax
+  ```
 
 ## 2. 画面に出る名前を決める
 
@@ -64,16 +91,16 @@ echo 'api-dev' > ~/.claude/fatmax-host     # いつでも
 
 ## 3. ハブを起動する
 
-```sh
-nohup fatmax hub > /tmp/fatmax-hub.log 2>&1 &
-```
-
-記録は `~/.fatmax/fatmax.db` です。**コンテナを作り直すと消えます。**
-残すならマウントした場所を指してください。
+**`--db` を必ず付けます。** 既定は `~/.fatmax/fatmax.db` で、そこはコンテナの中なので
+**作り直すと記録が丸ごと消えます**。1. で作った `.fatmax/` を指してください。
 
 ```sh
-nohup fatmax hub --db /workspaces/.fatmax/fatmax.db > /tmp/fatmax-hub.log 2>&1 &
+nohup fatmax hub --db "$PWD/.fatmax/fatmax.db" > /tmp/fatmax-hub.log 2>&1 &
 ```
+
+**どこに書いているかは 6. の `fatmax status` に出ます。** `記録` の行が
+`/workspaces/…/.fatmax/fatmax.db` になっていることを見てください
+（`$PWD` がワークスペースの直下でないと、黙って別の場所に作ります）。
 
 ## 4. hook を入れる
 
@@ -120,15 +147,29 @@ fatmax status
 
 ## コンテナを作り直したとき
 
-**Dev Containers: Rebuild Container** をすると `/usr/local/bin/fatmax` も記録も消えるので、
-**1. から**やり直しになります。毎回やりたくないなら `devcontainer.json` に入れておきます。
+**Dev Containers: Rebuild Container** をしても、`.fatmax/` はワークスペースの中なので
+**実行ファイルも記録も残ります**。消えるのはコンテナの中に作ったものだけです。
+
+| 残るもの | 消えるもの |
+|---|---|
+| `.fatmax/fatmax`（実行ファイル） | `/usr/local/bin/fatmax` の symlink |
+| `.fatmax/fatmax.db`（記録） | `~/.claude/fatmax-host`（画面に出る名前） |
+| | `~/.claude/settings.json` の hook（＝ 4.） |
+
+消えるぶんを毎回やり直したくないなら `devcontainer.json` に入れておきます。
 
 ```json
-"postStartCommand": "sh -c 'mkdir -p ~/.claude && echo dev-1 > ~/.claude/fatmax-host && curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o /tmp/fatmax && chmod +x /tmp/fatmax && (nohup /tmp/fatmax hub >/tmp/fatmax-hub.log 2>&1 &)'"
+"postStartCommand": "mkdir -p .fatmax ~/.claude && { [ -x .fatmax/fatmax ] || { curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o .fatmax/fatmax && chmod +x .fatmax/fatmax; }; } && ln -sf ${containerWorkspaceFolder}/.fatmax/fatmax /usr/local/bin/fatmax && echo dev-1 > ~/.claude/fatmax-host && (nohup fatmax hub --db ${containerWorkspaceFolder}/.fatmax/fatmax.db > /tmp/fatmax-hub.log 2>&1 &)"
 ```
 
 > **`postCreateCommand` ではなく `postStartCommand`。** postCreate は作った1回だけなので、
 > コンテナを止めて開き直すとハブが上がりません。
+
+- **実行ファイルは「無ければ取る」。** 毎回上書きすると、走っているものを差し替えて
+  しまううえ、Rebuild のたびにネットワークを待たされます
+- **hook は入りません。** ハブが待ち受けるまで待つ必要があり、
+  一行に混ぜると競争になります。Rebuild のあとに 4. を叩き直してください
+  （`fatmax status` の `hook` が `✗` なら、それです）
 
 ---
 
@@ -141,25 +182,32 @@ fatmax status
 | 昨日まで届いていたのに止まった | コンテナの IP が変わって、hook に焼かれた宛先が古い。`setup.sh` を叩き直す |
 | 回数とコストが倍 | hook が2箇所（user と project）に入っています。片方を `--uninstall` |
 | 実行中に差し込んだ指示が出ない | `fatmax status` の `⚠ ~/.claude/projects が読めません`。**Claude Code と同じユーザー**でハブを動かす |
+| 作り直したら過去のコストも会話も消えた | `--db` を付けずに起動しています。`fatmax status` の `記録` が `~/.fatmax/…` ならそれです |
+| `fatmax: command not found` | symlink はコンテナの中なので Rebuild で消えます。1. の `ln -sf` だけ張り直す |
+| 版が古いまま | `.fatmax/fatmax` は**残る**ので上がりません。1. の最後で消して取り直す |
 
 ---
 
 ## アンインストール
 
-**コンテナを捨てるだけなら何もしなくて構いません**（中にしか置いていないので）。
-`~/.claude` をマウントしている・使い続ける場合は:
+**コンテナを捨てても消えません。** 実行ファイルも記録もワークスペースの中（`.fatmax/`）に
+置いてあるためです。外すときは:
 
 ```sh
 curl -fsSL http://127.0.0.1:8787/setup.sh | sh -s -- --uninstall
 pkill -f 'fatmax hub' || true
 rm -f /usr/local/bin/fatmax ~/.claude/fatmax-host
+rm -f .fatmax/fatmax                                   # 記録（fatmax.db）は残ります
 ```
+
+`devcontainer.json` に `postStartCommand` を足したなら、そこからも消してください。
+残っていると次の Rebuild で取り直して起動します。
 
 `--local` で入れたなら、**入れたディレクトリで** `sh -s -- --uninstall --local` です
 （外す場所も入れたときと同じ指定で選びます）。fatmax が書いた hook と statusLine
 だけを外すので、あなた自身の設定は残ります。
 
-記録を消すなら `rm -rf ~/.fatmax`（`--db` で場所を変えたならそちら）。
+記録を消すなら `rm -rf .fatmax`（`--db` で場所を変えたならそちら）。
 **残したいなら消さないでください** —— 日別の集計を生イベントから積み直しているので、
 消すと過去のコストも会話も戻りません。
 

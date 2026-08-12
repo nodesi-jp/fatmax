@@ -96,6 +96,9 @@ sudo apt install fatmax && sudo systemctl enable --now fatmax-hub   # ← 鍵と
   見られたくない会話があるマシンには入れないでください
 - 記録の置き場は入れ方で変わります。apt（system サービス）なら `/var/lib/fatmax/fatmax.db`、
   実行ファイルを自分で動かしたなら `~/.fatmax/fatmax.db`
+- **コンテナの中で動かすなら `--db` でワークスペースの中を指してください。**
+  既定の置き場はコンテナの中なので、作り直すと**過去のコストも会話も戻りません**
+  （[コンテナ1つで完結](INSTALL-container.md)）
 
 ---
 
