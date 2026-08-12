@@ -75,6 +75,10 @@ fatmax が**気づかせます**。人間の無駄時間をゼロに近づける
 **入れるのは集約する1台だけ**です。見たいマシンには何も置きません（→ [見たいマシンを繋ぐ](#見たいマシンを繋ぐ)）。
 いま配っているのは `0.1.17` です。外し方は [アンインストール](#アンインストールuninstall) にあります。
 
+> **Claude Code を Docker コンテナで動かしている場合**（手元の WSL + コンテナ1つ、
+> EC2 の上に複数コンテナ）は、入れる場所と繋ぎ方が変わります。
+> → **[WSL + Docker（amd64 / dnf 系）の入れ方](INSTALL-wsl-docker.md)**
+
 ### Ubuntu / Debian
 
 ```sh
@@ -196,6 +200,9 @@ nohup /tmp/fatmax relay --hub http://<ハブの IP>:8787 > /tmp/fatmax.log 2>&1 
 
 Docker Desktop の中からホストのハブを見るなら、`<ハブの IP>` は `host.docker.internal` です。
 CPU は `uname -m` で分かります（`x86_64` / `aarch64`）。
+
+コンテナの作り方（`--add-host`）や、EC2 から手元のハブへ SSH で繋ぐところまで含めた手順は
+**[WSL + Docker（amd64 / dnf 系）の入れ方](INSTALL-wsl-docker.md)** にあります。
 
 `relay` は省けます（`fatmax --hub URL` でも中継として動きます）。`--hub` を取るのは中継だけなので、
 役目が一意に決まるためです。**逆は許しません**——役目も `--hub` も無いと `不明な役目` で止まります。
