@@ -88,11 +88,15 @@ sudo apt install fatmax
 
 署名済みです。
 
-`fatmax-hub` が systemd のサービスとして起動し、`http://<そのマシンの IP>:8787/` が開きます。
+**入れただけでは何も動きません。** 集約する1台で、上げてください。
 
 ```sh
+sudo systemctl enable --now fatmax-hub
 systemctl status fatmax-hub
 ```
+
+`http://<そのマシンの IP>:8787/` が開きます。**上げるのは1台だけです。**
+認証が無いので、入れた全台で上がると、意図しない待ち受けがそのぶん増えます。
 
 ### コンテナ（root・sudo も systemd も無い）
 
