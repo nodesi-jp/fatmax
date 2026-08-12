@@ -1,6 +1,6 @@
 # 複数 EC2 × 複数コンテナ（amd64 / dnf 系）
 
-**手元の Windows（WSL Ubuntu）にハブ**を置き、**複数の EC2 で動いている複数のコンテナ**を
+**手元の WSL Ubuntu にハブ**を置き、**複数の EC2 で動いている複数のコンテナ**を
 1画面に集める手順です。各コンテナには**中継（リレー）**を入れます。
 
 **CPU は amd64（x86_64）**、コンテナは **dnf 系**（Amazon Linux / Fedora / RHEL）を前提に
@@ -110,7 +110,7 @@ sudo systemctl enable --now fatmax-hub
 ```
 
 エラーになる、または `offline` なら **その WSL では systemd が動いていません**。有効にするなら
-`/etc/wsl.conf` に次を書いて、Windows 側で `wsl --shutdown` してから開き直します。
+`/etc/wsl.conf` に次を書いて、`wsl --shutdown` してから開き直します。
 
 ```ini
 [boot]
@@ -126,8 +126,9 @@ nohup fatmax hub > /tmp/fatmax-hub.log 2>&1 &
 > **記録の置き場が変わります。** systemd（専用ユーザー）なら `/var/lib/fatmax/fatmax.db`、
 > 自分で動かしたなら `~/.fatmax/fatmax.db` です。**あとで消すときに効いてきます。**
 
-画面は Windows のブラウザから **`http://localhost:8787/`** です。WSL2 は Windows の localhost を
-中の待ち受けへ転送するので、IP を調べる必要はありません。
+画面は Windows のブラウザから **`http://localhost:8787/`** です。WSL2 が Windows の
+localhost を WSL 側の待ち受けへ転送するので、IP を調べる必要はありません。
+**ここが開けることを確かめてから 2. へ進んでください**（2. がこの経路に乗ります）。
 
 ## 2. 各 EC2 へ、8787 を持ち込む
 
@@ -180,12 +181,17 @@ docker network inspect bridge -f '{{(index .IPAM.Config 0).Gateway}}'
 ssh -N ec2-a          # 切れっぱなしが困るなら autossh
 ```
 
-> **VS Code の接続に兼ねさせることもできます。** Remote-SSH が読むのは
-> **Windows 側の `%USERPROFILE%\.ssh\config`** なので、そちらの同じ Host に `RemoteForward`
-> を足せば、VS Code が繋いでいる間だけ穴が開き、この `ssh -N` は要らなくなります。
-> ただし転送元が **Windows の `127.0.0.1:8787`** になるので、WSL のハブに届くかは
-> WSL2 の localhost 転送しだいです。**下の確認が通れば OK**、駄目なら上の `ssh -N`（WSL から）に
-> 戻してください。
+> **VS Code の接続に兼ねさせるほうが楽です。** Remote-SSH が使うのは
+> **Windows 側の `%USERPROFILE%\.ssh\config`** なので、そちらの同じ Host に
+> `RemoteForward` を書けば、**VS Code が EC2 に繋いでいる間はトンネルも張られます**。
+> 別のターミナルで `ssh -N` を上げ続ける必要がありません。
+>
+> このとき転送元は **Windows の `127.0.0.1:8787`** になります。これは
+> **1. で画面を開いたときに通ったのと同じ経路**（WSL2 の localhost 転送）なので、
+> **画面が見えているなら届きます。**
+>
+> 引き換えに、**VS Code の接続が切れるとトンネルも切れます。**
+> その間のイベントはリレーが溜めて、繋ぎ直したときに送ります（最大 5,000 件）。
 
 確認 —— **EC2 のホストで**（Remote-SSH で入った先のターミナル）:
 
