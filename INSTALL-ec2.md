@@ -1,15 +1,14 @@
-# Docker コンテナでの入れ方（amd64 / dnf 系）
+# 複数 EC2 × 複数コンテナ（amd64 / dnf 系）
 
-Claude Code を **Docker コンテナの中**で動かしている人向けの手順です。扱うのは次の2つ。
+**手元の Windows（WSL Ubuntu）にハブ**を置き、**複数の EC2 で動いている複数のコンテナ**を
+1画面に集める手順です。各コンテナには**中継（リレー）**を入れます。
 
-- **[パターン1](#パターン1-コンテナ1つで完結ハブだけ起動)** — コンテナ1つで完結。**ハブを起動するだけ**
-- **[パターン2](#パターン2-複数-ec2--複数コンテナ)** — 手元の WSL Ubuntu にハブ、複数の EC2 でそれぞれ複数コンテナ
-
-どちらも **CPU は amd64（x86_64）**、コンテナは **dnf 系**（Amazon Linux / Fedora / RHEL）を前提に
+**CPU は amd64（x86_64）**、コンテナは **dnf 系**（Amazon Linux / Fedora / RHEL）を前提に
 書いてあります。いま配っているのは `0.1.17` です。
 やめ方は [アンインストール](#アンインストール) にあります。
 
-コンテナを使わない一般的な入れ方は [README](README.md) を見てください。
+- コンテナ1つで完結させたい（ハブだけ起動） → **[コンテナ1つで完結](INSTALL-container.md)**
+- コンテナを使わない一般的な入れ方 → **[install](INSTALL.md)**
 
 ---
 
@@ -17,132 +16,16 @@ Claude Code を **Docker コンテナの中**で動かしている人向けの�
 
 **実行ファイルは1つ**（`fatmax`）で、起動のしかたで役目が決まります。
 
-| 役目 | 起動 | どのパターンで要るか |
+| 役目 | 起動 | どこに置くか |
 |---|---|---|
-| **ハブ**（集約して画面を出す） | `fatmax hub` | 両方。**全体で1つだけ** |
-| **リレー**（中継） | `fatmax --hub <URL>` | **パターン2だけ。** ハブが別のマシンにあるときに要る |
+| **ハブ**（集約して画面を出す） | `fatmax hub` | 手元の WSL Ubuntu に**1つだけ** |
+| **リレー**（中継） | `fatmax --hub <URL>` | **コンテナ1つにつき1つ** |
 
 **dnf 系のイメージには `hostname` コマンドが入っていません。** 名前を決めるファイルを置かないと、
-画面に出る名前が**空**になります（実測: `amazonlinux:2023`）。**最初に置いてください。**
-
-```sh
-mkdir -p ~/.claude && echo 'dev-1' > ~/.claude/fatmax-host
-```
-
-この1行目が画面に出る名前になります。**送るたびに読み直す**ので、書き換えても再起動は要りません。
+画面に出る名前が**空**になります（実測: `amazonlinux:2023`）。**必ず置いてください。**
+この1行目が画面に出る名前です。**送るたびに読み直す**ので、書き換えても再起動は要りません。
 
 ---
-
-## パターン1: コンテナ1つで完結（ハブだけ起動）
-
-```mermaid
-flowchart LR
-  subgraph C["コンテナ (amd64 / dnf)"]
-    CC["Claude Code"]
-    H["fatmax hub<br/>:8787"]
-    T[("~/.claude/projects")]
-    DB[("~/.fatmax/fatmax.db")]
-    CC -->|"hook 127.0.0.1:8787"| H
-    H -.->|読む| T
-    H --> DB
-  end
-  BR["ブラウザ<br/>localhost:8787"] -->|"-p 8787:8787"| H
-```
-
-**リレーは要りません。** hook はハブへ直接届き、実行中に差し込んだ指示（`~/.claude/projects`）も
-同じコンテナなのでハブ自身が読めます。**Claude Code と同じユーザーで動かす**のが条件です。
-
-### 1. 実行ファイルを置く
-
-```sh
-curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o /usr/local/bin/fatmax
-chmod +x /usr/local/bin/fatmax
-mkdir -p ~/.claude && echo 'dev-1' > ~/.claude/fatmax-host
-```
-
-`.rpm` はまだありません。musl 静的リンクなので、置いて実行権を付ければ動きます。
-dnf 系には **curl も python3 も最初から入っています**（dnf 自身が python3 なので）。
-実測: `amazonlinux:2023`（amd64）は python3 3.9 / curl 8.17。jq はありませんが要りません。
-
-### 2. ハブを起動する
-
-```sh
-nohup fatmax hub > /tmp/fatmax-hub.log 2>&1 &
-```
-
-記録は `~/.fatmax/fatmax.db` です。**コンテナを作り直すと消えます。**
-残すならマウントした場所を指してください。
-
-```sh
-nohup fatmax hub --db /workspaces/.fatmax/fatmax.db > /tmp/fatmax-hub.log 2>&1 &
-```
-
-### 3. hook を入れる
-
-**Claude Code を開いているディレクトリで**実行します。
-
-```sh
-curl -fsSL http://127.0.0.1:8787/setup.sh | sh
-```
-
-`~/.claude/settings.json` に hook と statusLine が入るだけで、置くファイルはありません。
-**このあと Claude Code を再起動してください。**
-
-- 既定は `--user`（そのコンテナの全プロジェクト）です。1つのプロジェクトに絞るなら、
-  そのディレクトリで `sh -s -- --local`。**書き先が `$PWD/.claude/settings.local.json` なので、
-  場所を間違えると「インストールしました」と出たまま1件も届きません**
-- **2箇所に入れないこと。** user と project の両方にあると足し算で読まれ、
-  **全イベントが2回届いて回数もコストも倍**になります
-
-> **hook の宛先には、コンテナの IP が書かれます**（`127.0.0.1:8787` で叩いても
-> `http://172.17.0.2:8787` になります。他のマシンへ配る設定に localhost が入る事故を防ぐため）。
-> `~/.claude` をマウントして使い回している場合、**コンテナの IP が変わった時点で届かなくなります**。
-> そのときは 3. をやり直してください。
-
-### 4. 画面を開く
-
-**8787 をホストへ出します。**
-
-```sh
-docker run -p 8787:8787 ...
-```
-
-devcontainer なら PORTS タブ、compose なら `ports: ["8787:8787"]` です。
-**コンテナを作るときにしか効きません**ので、出ていなければ作り直してください。
-出せたら、ホスト側のブラウザで `http://localhost:8787/` です。
-
-### 5. 確認
-
-```sh
-fatmax status
-```
-
-こう出れば成立です。
-
-```
-✓ ハブ        動いています  http://127.0.0.1:8787
-－ 中継        動いていません（hook はハブへ直接飛びます）
-✓ hook        入っています（ユーザ全体）
-✓ transcript  読めています（実行中に差し込んだ指示も出ます）
-```
-
-`－ 中継` は**このパターンでは正常**です。要らないので。
-
-### コンテナを作り直したとき
-
-`/usr/local/bin/fatmax` も記録も消えるので、**1. から**やり直します。
-毎回やりたくないなら devcontainer に入れておきます。
-
-```json
-"postStartCommand": "sh -c 'mkdir -p ~/.claude && echo dev-1 > ~/.claude/fatmax-host && curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o /tmp/fatmax && chmod +x /tmp/fatmax && (nohup /tmp/fatmax hub >/tmp/fatmax-hub.log 2>&1 &)'"
-```
-
-> **`postCreateCommand` ではなく `postStartCommand`。** postCreate は作った1回だけなので、
-> コンテナを止めて開き直すとハブが上がりません。
-
----
-
-## パターン2: 複数 EC2 × 複数コンテナ
 
 ```mermaid
 flowchart LR
@@ -182,7 +65,7 @@ flowchart LR
 - **ハブの URL を書く場所は、リレーの `--hub` だけ**です。Dockerfile にもイメージにも焼かないこと。
   ハブが引っ越したときに作り直す羽目になります
 
-### 1. 手元の WSL Ubuntu にハブを入れる
+## 1. 手元の WSL Ubuntu にハブを入れる
 
 ```sh
 curl -fsSL https://nodesi-jp.github.io/fatmax/KEY.gpg | sudo tee /usr/share/keyrings/fatmax.gpg > /dev/null
@@ -224,7 +107,7 @@ nohup fatmax hub > /tmp/fatmax-hub.log 2>&1 &
 画面は Windows のブラウザから **`http://localhost:8787/`** です。WSL2 は Windows の localhost を
 中の待ち受けへ転送するので、IP を調べる必要はありません。
 
-### 2. 各 EC2 へ、8787 を持ち込む
+## 2. 各 EC2 へ、8787 を持ち込む
 
 **ハブの居る WSL から** EC2 へ SSH します。`~/.ssh/config`:
 
@@ -280,7 +163,7 @@ ss -tlnp | grep 8787                        # 172.17.0.1:8787 で待っている
 curl -s http://172.17.0.1:8787/healthz      # ハブが返す
 ```
 
-### 3. コンテナからハブが見えるようにする
+## 3. コンテナからハブが見えるようにする
 
 コンテナを作るときに、いま穴を開けた `172.17.0.1` を名前で引けるようにします。
 
@@ -311,7 +194,7 @@ getent hosts host.docker.internal          # アドレスが1行出れば OK
 curl -s http://host.docker.internal:8787/healthz
 ```
 
-### 4. 各コンテナにリレーを置く
+## 4. 各コンテナにリレーを置く
 
 ```sh
 curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o /usr/local/bin/fatmax
@@ -337,7 +220,7 @@ devcontainer なら、毎回やらなくて済むように入れておきます�
 "postStartCommand": "sh -c 'mkdir -p ~/.claude && echo ec2-a/api > ~/.claude/fatmax-host && curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o /tmp/fatmax && chmod +x /tmp/fatmax && (nohup /tmp/fatmax --hub http://host.docker.internal:8787 >/tmp/fatmax.log 2>&1 &)'"
 ```
 
-### 5. 各コンテナに hook を入れる
+## 5. 各コンテナに hook を入れる
 
 **Claude Code を開いているディレクトリで**実行します。
 
@@ -349,7 +232,7 @@ curl -fsSL http://host.docker.internal:8787/setup.sh | sh
 hook の宛先は **127.0.0.1:8788 固定**（同じコンテナの中のリレー）です。
 ハブが引っ越しても入れ直しは要りません。直すのはリレーの `--hub` だけです。
 
-### 6. 確認
+## 6. 確認
 
 ```sh
 fatmax status --hub http://host.docker.internal:8787
@@ -359,7 +242,7 @@ fatmax status --hub http://host.docker.internal:8787
 —— ハブが別にあるなら、それが正常な姿です。
 最後に、画面にそのコンテナの名前（`ec2-a/api`）が出れば成立です。
 
-### EC2 で気をつけること
+## EC2 で気をつけること
 
 - **リレーを落とさないでください。** SSH が切れている間、リレーは**溜めて**おき、
   復帰後に順番どおり送ります（最大 5,000 件）。リレーを置かずに hook 直送にすると、
@@ -370,33 +253,43 @@ fatmax status --hub http://host.docker.internal:8787
 
 ---
 
+## トークルームも使う場合（任意）
+
+セッションどうしを会話させるなら、**会話担当エージェント**を入れます。
+hook とは別物で、**入れなくても記録は取れます**。
+
+```sh
+mkdir -p ~/.claude/agents
+curl -fsSL http://host.docker.internal:8787/agents/room-talker.md -o ~/.claude/agents/room-talker.md
+```
+
+**宛先は `setup.sh` を叩いたときと同じ**です。入れたら **Claude Code を開き直してください。**
+
+- **部屋に入れるコンテナそれぞれに入れます。** `~/.claude` はコンテナごとに別なので、\n  1つ入れても他のコンテナには効きません。作り直すと消えるため、`postStartCommand` に入れておくと楽です\n- **会話そのものはリレー（`127.0.0.1:8788`）が通します。** 定義が毎回自分で宛先を決めます
+- 一覧と Windows 版の入れ方は `http://host.docker.internal:8787/agents` にあります
+
+---
+
 ## うまくいかないとき
 
 | 症状 | 見るところ |
 |---|---|
 | 画面に名前が出ない・空になる | `~/.claude/fatmax-host` が無い。**dnf 系には `hostname` コマンドがありません** |
 | 作り直すたびにマシンが増える | 同上。`~/.claude` をマウントするか `postStartCommand` に入れる |
+| リレーは動くのに届かない | `--hub` の書き忘れ（既定は自分自身）。`cat /tmp/fatmax.log` の「ハブ接続」 |
+| コンテナからハブが見えない | SSH が切れている / `GatewayPorts` / `--add-host`。EC2 上で `ss -tlnp \| grep 8787` |
 | 回数とコストが倍 | hook が2箇所（user と project）に入っています。片方を `--uninstall` |
-| 実行中に差し込んだ指示が出ない | `fatmax status` の `⚠ ~/.claude/projects が読めません`。ハブかリレーを Claude Code と**同じコンテナ・同じユーザー**で動かしてください |
-| 昨日まで届いていたのに止まった | コンテナの IP が変わって、hook に焼かれた宛先が古い。`setup.sh` を叩き直す（パターン1） |
-| リレーは動くのに届かない | `--hub` の書き忘れ（既定は自分自身）。`cat /tmp/fatmax.log` の「ハブ接続」（パターン2） |
+| 実行中に差し込んだ指示が出ない | `fatmax status` の `⚠ ~/.claude/projects が読めません`。リレーを Claude Code と**同じコンテナ・同じユーザー**で動かす |
+| 部屋に入れない | そのコンテナに `~/.claude/agents/room-talker.md` がありません（[上](#トークルームも使う場合任意)） |
 
 ---
 
 ## アンインストール
 
-### コンテナ（パターン1・2 共通）
+### コンテナ
 
 **捨てるだけなら何もしなくて構いません**（中にしか置いていないので）。
 `~/.claude` をマウントしている・使い続ける場合は:
-
-```sh
-curl -fsSL http://127.0.0.1:8787/setup.sh | sh -s -- --uninstall     # パターン1
-pkill -f 'fatmax hub' || true
-rm -f /usr/local/bin/fatmax ~/.claude/fatmax-host
-```
-
-パターン2 なら宛先と止めるものが変わります。
 
 ```sh
 curl -fsSL http://host.docker.internal:8787/setup.sh | sh -s -- --uninstall
@@ -408,9 +301,7 @@ rm -f /usr/local/bin/fatmax ~/.claude/fatmax-host
 （外す場所も入れたときと同じ指定で選びます）。fatmax が書いた hook と statusLine
 だけを外すので、あなた自身の設定は残ります。
 
-記録を消すなら `rm -rf ~/.fatmax`（パターン1。`--db` で場所を変えたならそちら）。
-
-### EC2（パターン2）
+### EC2
 
 **ファイルは1つも置いていません。** 穴を塞ぐだけです。
 
@@ -421,7 +312,7 @@ sudo systemctl reload sshd
 
 手元の `~/.ssh/config` からも `RemoteForward` の行を消します。
 
-### WSL Ubuntu（パターン2 のハブ）
+### WSL Ubuntu（ハブ）
 
 ```sh
 sudo systemctl disable --now fatmax-hub                # 止めるだけならここまで
