@@ -103,9 +103,10 @@ nohup fatmax hub > /tmp/fatmax-hub.log 2>&1 &
 （devcontainer なら PORTS タブ、素の docker なら `-p 8787:8787`）。
 </details>
 
-### macOS / その他の Linux
+### macOS / dnf 系（Amazon Linux・Fedora・RHEL）/ その他の Linux
 
-**実行ファイルを1つ置くだけ**です（`.rpm` はまだありません）。
+**実行ファイルを1つ置くだけ**です。**`.rpm` はまだありません**ので、dnf 系もこの方法です。
+musl 静的リンクなので、ディストリを選びません。
 
 ```sh
 curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-macos-arm64 -o /usr/local/bin/fatmax
@@ -184,9 +185,9 @@ nohup /tmp/fatmax relay --hub http://<ハブの IP>:8787 > /tmp/fatmax.log 2>&1 
 Docker Desktop の中からホストのハブを見るなら、`<ハブの IP>` は `host.docker.internal` です。
 CPU は `uname -m` で分かります（`x86_64` / `aarch64`）。
 
-**`relay` を省けません。** 実行ファイルは1個（`hub` / `relay` / `status`）で、役目を書かないと
-`不明な役目: --hub` で止まります。**黙ってハブとして起動しません**——中継のつもりのマシンで
-8787 が開くと、原因の分からない二重記録になるためです。
+`relay` は省けます（`fatmax --hub URL` でも中継として動きます）。`--hub` を取るのは中継だけなので、
+役目が一意に決まるためです。**逆は許しません**——役目も `--hub` も無いと `不明な役目` で止まります。
+中継のつもりのマシンで 8787 が開くと、原因の分からない二重記録になるためです。
 
 `/tmp` にしてあるのは、置き場所を決めさせるとそこで手が止まるからです。引き換えに再起動で消えます。
 `/tmp` が `noexec` の環境では `Permission denied` になるので、`$HOME` の下に置いてください。
