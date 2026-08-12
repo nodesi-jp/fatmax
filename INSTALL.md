@@ -1,7 +1,7 @@
 # install — fatmax の入れ方
 
 **入れるのは集約する1台だけ**です。見たいマシンには何も置きません（→ [見たいマシンを繋ぐ](#見たいマシンを繋ぐ)）。
-いま配っているのは `0.1.17` です。外し方は [アンインストール](#アンインストールuninstall) にあります。
+いま配っているのは `0.1.29` です。外し方は [アンインストール](#アンインストールuninstall) にあります。
 
 **動くのは macOS / Linux（WSL を含む）です。**
 
@@ -37,33 +37,55 @@ nohup fatmax hub > /tmp/fatmax-hub.log 2>&1 &
 （devcontainer なら PORTS タブ、素の docker なら `-p 8787:8787`）。
 </details>
 
-## macOS / dnf 系（Amazon Linux・Fedora・RHEL）/ その他の Linux
+## Amazon Linux 2023 / Fedora / RHEL（dnf）
 
-**実行ファイルを1つ置くだけ**です。**`.rpm` はまだありません**ので、dnf 系もこの方法です。
-musl 静的リンクなので、ディストリを選びません。
+```sh
+sudo curl -fsSL https://nodesi-jp.github.io/fatmax/dnf/fatmax.repo -o /etc/yum.repos.d/fatmax.repo
+sudo dnf install fatmax
+sudo systemctl enable --now fatmax-hub
+```
 
-**dnf 系（Amazon Linux / Fedora / RHEL、amd64）**——そのまま貼れます。
+CPU（x86_64 / aarch64）は dnf が選びます。署名済みです。
+**入れただけでは動きません。**最後の1行で上げます。
+
+## その他の Linux（パッケージを使わない場合）
+
+**実行ファイルを1つ置くだけ**です。musl 静的リンクなので、ディストリを選びません。
+`apt` も `dnf` も使わない場合や、システムに何も入れたくない場合はこちらです。
+
+**先に CPU を確かめてください。** 落とすファイルがこれで決まります。
+
+```sh
+uname -m        # x86_64 → 下のまま  /  aarch64 → ファイル名を fatmax-linux-aarch64 に
+```
 
 ```sh
 curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o /usr/local/bin/fatmax
 chmod +x /usr/local/bin/fatmax
-fatmax hub
+fatmax --version        # ← ここで確かめる
 ```
 
-**macOS（Apple Silicon）**
+**`fatmax --version` を飛ばさないでください。** 落とすファイルを取り違えても
+`curl` は成功するので、**動かないファイルが置かれたことに気付けません**
+（実測: `Exec format error`。しかも `PATH` の上に残るので、以後ずっと邪魔をします）。
+版が出れば、そのまま `fatmax hub` で上がります。
+
+## macOS（Apple Silicon）
+
+**上とは別のファイル**です。書き先が同じなので、取り違えると上書きされます。
 
 ```sh
 curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-macos-arm64 -o /usr/local/bin/fatmax
 chmod +x /usr/local/bin/fatmax
-fatmax hub
+fatmax --version
 ```
 
-CPU は `uname -m` で分かります。ファイル名は次のとおりです。
+## 落とすファイルの一覧
 
 | 入れる先 | CPU（`uname -m`） | ファイル名 |
 |---|---|---|
-| Linux（dnf 系ほか） | `x86_64` | `fatmax-linux-x86_64` |
-| Linux（dnf 系ほか） | `aarch64` | `fatmax-linux-aarch64` |
+| Linux | `x86_64` | `fatmax-linux-x86_64` |
+| Linux | `aarch64` | `fatmax-linux-aarch64` |
 | macOS | `arm64` | `fatmax-macos-arm64` |
 
 <details>
@@ -199,7 +221,7 @@ curl -fsSL http://<ハブの IP>:8787/setup.sh | sh -s -- --uninstall
 ```sh
 sudo systemctl disable --now fatmax-hub      # 止めるだけならここまで
 systemctl --user disable --now fatmax-relay  # 中継を置いていたら（user サービスなので各自で）
-sudo apt purge fatmax
+sudo apt purge fatmax                        # dnf 系なら sudo dnf remove fatmax
 ```
 
 **記録は消えません。** `purge` でも残します——日別の集計を生イベントから積み直しているので、

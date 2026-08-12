@@ -38,8 +38,13 @@ echo "deb [signed-by=/usr/share/keyrings/fatmax.gpg] https://nodesi-jp.github.io
 apt update &amp;&amp; apt install -y fatmax
 nohup fatmax hub &gt; /tmp/fatmax-hub.log 2&gt;&amp;1 &amp;</pre>
 
-<h2>install — macOS / dnf 系ほか</h2>
-<p class="sub">パッケージはありません。実行ファイルを置くだけです（musl 静的リンク）。</p>
+<h2>install — Amazon Linux / Fedora / RHEL（dnf）</h2>
+<pre>sudo curl -fsSL https://nodesi-jp.github.io/fatmax/dnf/fatmax.repo -o /etc/yum.repos.d/fatmax.repo
+sudo dnf install fatmax
+sudo systemctl enable --now fatmax-hub</pre>
+
+<h2>install — macOS / その他の Linux</h2>
+<p class="sub">パッケージを使わない場合。実行ファイルを置くだけです（musl 静的リンク）。</p>
 <pre>curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-macos-arm64  -o /usr/local/bin/fatmax   # macOS
 curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o /usr/local/bin/fatmax   # Linux amd64
 curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-aarch64 -o /usr/local/bin/fatmax  # Linux arm64

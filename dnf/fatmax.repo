@@ -1,0 +1,7 @@
+[fatmax]
+name=fatmax
+baseurl=https://nodesi-jp.github.io/fatmax/dnf
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://nodesi-jp.github.io/fatmax/dnf/KEY.asc
