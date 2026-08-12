@@ -18,10 +18,6 @@ Claude Code もそのコンテナの中で動いている状態から始めま�
 以下のコマンドは**すべてコンテナの中のターミナル**（VS Code のターミナル）で叩きます。
 手元に置くものは1つもありません。
 
-**dnf 系のイメージには `hostname` コマンドが入っていません。** 名前を決めるファイルを置かないと、
-画面に出る名前が**空**になります（実測: `amazonlinux:2023`）。**必ず置いてください。**
-この1行目が画面に出る名前です。**送るたびに読み直す**ので、書き換えても再起動は要りません。
-
 ---
 
 ```mermaid
@@ -46,10 +42,27 @@ flowchart LR
 ```sh
 curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o /usr/local/bin/fatmax
 chmod +x /usr/local/bin/fatmax
+```
+
+## 2. 画面に出る名前を決める
+
+`~/.claude/fatmax-host` の**1行目がそのまま画面に出ます。** 好きな名前にしてください。
+
+```sh
 mkdir -p ~/.claude && echo 'dev-1' > ~/.claude/fatmax-host
 ```
 
-## 2. ハブを起動する
+**必ず置いてください。** dnf 系のイメージには `hostname` コマンドが入っていないので、
+無いと**名前が空のまま**画面に並びます（実測: `amazonlinux:2023`）。
+
+**あとから書き換えてもかまいません。** 送るたびに読み直すので、
+ハブや Claude Code の再起動は要りません。次のイベントから新しい名前になります。
+
+```sh
+echo 'api-dev' > ~/.claude/fatmax-host     # いつでも
+```
+
+## 3. ハブを起動する
 
 ```sh
 nohup fatmax hub > /tmp/fatmax-hub.log 2>&1 &
@@ -62,7 +75,7 @@ nohup fatmax hub > /tmp/fatmax-hub.log 2>&1 &
 nohup fatmax hub --db /workspaces/.fatmax/fatmax.db > /tmp/fatmax-hub.log 2>&1 &
 ```
 
-## 3. hook を入れる
+## 4. hook を入れる
 
 **Claude Code を開いているディレクトリで**実行します。
 
@@ -73,21 +86,13 @@ curl -fsSL http://127.0.0.1:8787/setup.sh | sh
 `~/.claude/settings.json` に hook と statusLine が入るだけで、置くファイルはありません。
 **このあと Claude Code を再起動してください。**
 
-- 既定は `--user`（そのコンテナの全プロジェクト）です。1つのプロジェクトに絞るなら、
-  そのディレクトリで `sh -s -- --local`。**書き先が `$PWD/.claude/settings.local.json` なので、
-  場所を間違えると「インストールしました」と出たまま1件も届きません**
 - **2箇所に入れないこと。** user と project の両方にあると足し算で読まれ、
   **全イベントが2回届いて回数もコストも倍**になります
 
-> **hook の宛先には、コンテナの IP が書かれます**（`127.0.0.1:8787` で叩いても
-> `http://172.17.0.2:8787` になります。他のマシンへ配る設定に localhost が入る事故を防ぐため）。
-> `~/.claude` をマウントして使い回している場合、**コンテナの IP が変わった時点で届かなくなります**。
-> そのときは 3. をやり直してください。
-
-## 4. 画面を開く
+## 5. 画面を開く
 
 **VS Code の PORTS タブ**（ターミナルの隣）に `8787` が出ています。
-2. でハブが待ち受けを始めた時点で、Dev Containers が**自動で転送**します。
+3. でハブが待ち受けを始めた時点で、Dev Containers が**自動で転送**します。
 
 その行の**🌐 をクリックするだけ**です。手元のブラウザで `http://localhost:8787/` が開きます。
 
@@ -96,7 +101,7 @@ curl -fsSL http://127.0.0.1:8787/setup.sh | sh
 
 **コンテナを作り直す必要はありません。**
 
-## 5. 確認
+## 6. 確認
 
 ```sh
 fatmax status
@@ -132,7 +137,7 @@ fatmax status
 | 症状 | 見るところ |
 |---|---|
 | 画面に名前が出ない・空になる | `~/.claude/fatmax-host` が無い。**dnf 系には `hostname` コマンドがありません** |
-| 画面が開けない | VS Code の PORTS に `8787` が無い。または 2. のハブが上がっていない |
+| 画面が開けない | VS Code の PORTS に `8787` が無い。または 3. のハブが上がっていない |
 | 昨日まで届いていたのに止まった | コンテナの IP が変わって、hook に焼かれた宛先が古い。`setup.sh` を叩き直す |
 | 回数とコストが倍 | hook が2箇所（user と project）に入っています。片方を `--uninstall` |
 | 実行中に差し込んだ指示が出ない | `fatmax status` の `⚠ ~/.claude/projects が読めません`。**Claude Code と同じユーザー**でハブを動かす |
