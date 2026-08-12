@@ -10,6 +10,14 @@ Claude Code を **Docker コンテナ1つ**で動かしていて、そのコン�
 - 複数の EC2 に散らばったコンテナを1画面に集めたい → **[複数 EC2 × 複数コンテナ](INSTALL-ec2.md)**
 - コンテナを使わない一般的な入れ方 → **[install](INSTALL.md)**
 
+## 前提
+
+**VS Code の Dev Containers 拡張でコンテナの中を開いて開発できていること。**
+Claude Code もそのコンテナの中で動いている状態から始めます。
+
+以下のコマンドは**すべてコンテナの中のターミナル**（VS Code のターミナル）で叩きます。
+手元（Windows / WSL）に置くものは1つもありません。
+
 **dnf 系のイメージには `hostname` コマンドが入っていません。** 名前を決めるファイルを置かないと、
 画面に出る名前が**空**になります（実測: `amazonlinux:2023`）。**必ず置いてください。**
 この1行目が画面に出る名前です。**送るたびに読み直す**ので、書き換えても再起動は要りません。
@@ -27,7 +35,7 @@ flowchart LR
     H -.->|読む| T
     H --> DB
   end
-  BR["ブラウザ<br/>localhost:8787"] -->|"-p 8787:8787"| H
+  BR["ブラウザ<br/>localhost:8787"] -->|"PORTS で転送"| H
 ```
 
 **リレーは要りません。** hook はハブへ直接届き、実行中に差し込んだ指示（`~/.claude/projects`）も
@@ -78,15 +86,15 @@ curl -fsSL http://127.0.0.1:8787/setup.sh | sh
 
 ## 4. 画面を開く
 
-**8787 をホストへ出します。**
+**VS Code の PORTS タブ**（ターミナルの隣）に `8787` が出ています。
+2. でハブが待ち受けを始めた時点で、Dev Containers が**自動で転送**します。
 
-```sh
-docker run -p 8787:8787 ...
-```
+その行の**🌐 をクリックするだけ**です。手元のブラウザで `http://localhost:8787/` が開きます。
 
-devcontainer なら PORTS タブ、compose なら `ports: ["8787:8787"]` です。
-**コンテナを作るときにしか効きません**ので、出ていなければ作り直してください。
-出せたら、ホスト側のブラウザで `http://localhost:8787/` です。
+- 出ていなければ「ポートの転送」で `8787` を足します
+- 毎回確実に出したいなら `devcontainer.json` に `"forwardPorts": [8787]`
+
+**コンテナを作り直す必要はありません。**
 
 ## 5. 確認
 
@@ -107,8 +115,8 @@ fatmax status
 
 ## コンテナを作り直したとき
 
-`/usr/local/bin/fatmax` も記録も消えるので、**1. から**やり直します。
-毎回やりたくないなら devcontainer に入れておきます。
+**Dev Containers: Rebuild Container** をすると `/usr/local/bin/fatmax` も記録も消えるので、
+**1. から**やり直しになります。毎回やりたくないなら `devcontainer.json` に入れておきます。
 
 ```json
 "postStartCommand": "sh -c 'mkdir -p ~/.claude && echo dev-1 > ~/.claude/fatmax-host && curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o /tmp/fatmax && chmod +x /tmp/fatmax && (nohup /tmp/fatmax hub >/tmp/fatmax-hub.log 2>&1 &)'"
@@ -141,7 +149,7 @@ curl -fsSL http://127.0.0.1:8787/agents/room-talker.md -o ~/.claude/agents/room-
 | 症状 | 見るところ |
 |---|---|
 | 画面に名前が出ない・空になる | `~/.claude/fatmax-host` が無い。**dnf 系には `hostname` コマンドがありません** |
-| 画面が開けない | `8787` をホストへ出していない。**コンテナを作るときにしか指定できません** |
+| 画面が開けない | VS Code の PORTS に `8787` が無い。または 2. のハブが上がっていない |
 | 昨日まで届いていたのに止まった | コンテナの IP が変わって、hook に焼かれた宛先が古い。`setup.sh` を叩き直す |
 | 回数とコストが倍 | hook が2箇所（user と project）に入っています。片方を `--uninstall` |
 | 実行中に差し込んだ指示が出ない | `fatmax status` の `⚠ ~/.claude/projects が読めません`。**Claude Code と同じユーザー**でハブを動かす |

@@ -10,6 +10,26 @@
 - コンテナ1つで完結させたい（ハブだけ起動） → **[コンテナ1つで完結](INSTALL-container.md)**
 - コンテナを使わない一般的な入れ方 → **[install](INSTALL.md)**
 
+## 前提
+
+**VS Code で、次の2つが繋がって開発できていること。**
+
+1. **Remote-SSH 拡張**で EC2 に入れている
+2. その上で **Dev Containers 拡張**でコンテナの中を開けている
+
+Claude Code もそのコンテナの中で動いている状態から始めます。
+
+叩く場所が3つに分かれるので、各手順の頭に書いてあります。
+
+| 場所 | 何をするか |
+|---|---|
+| **手元の WSL Ubuntu** | ハブを入れて上げる・SSH の設定 |
+| **EC2 のホスト**（Remote-SSH で入った先） | sshd の設定・穴が開いたかの確認 |
+| **コンテナの中**（Dev Containers で開いた先） | リレー・hook・確認 |
+
+> **VS Code の PORTS では代用できません。** あれは**向こうの口を手元へ持ってくる**向きだけで、
+> ここで要るのは逆（**手元のハブを EC2 へ持ち込む**）です。2. の `RemoteForward` がその役です。
+
 ---
 
 ## 先に、共通のこと
@@ -67,6 +87,8 @@ flowchart LR
 
 ## 1. 手元の WSL Ubuntu にハブを入れる
 
+**手元の WSL Ubuntu で。**
+
 ```sh
 curl -fsSL https://nodesi-jp.github.io/fatmax/KEY.gpg | sudo tee /usr/share/keyrings/fatmax.gpg > /dev/null
 echo "deb [signed-by=/usr/share/keyrings/fatmax.gpg] https://nodesi-jp.github.io/fatmax stable main" | sudo tee /etc/apt/sources.list.d/fatmax.list
@@ -109,7 +131,9 @@ nohup fatmax hub > /tmp/fatmax-hub.log 2>&1 &
 
 ## 2. 各 EC2 へ、8787 を持ち込む
 
-**ハブの居る WSL から** EC2 へ SSH します。`~/.ssh/config`:
+**手元の WSL Ubuntu で。**（ハブが居るのはここなので、SSH もここから張ります）
+
+`~/.ssh/config`:
 
 ```
 Host ec2-a
@@ -120,7 +144,7 @@ Host ec2-a
   ServerAliveCountMax 3
 ```
 
-EC2 側の `/etc/ssh/sshd_config` に1行足して、reload します。
+**EC2 のホストで**（Remote-SSH で入った先）、`/etc/ssh/sshd_config` に1行足して reload します。
 
 ```
 GatewayPorts clientspecified
@@ -156,7 +180,14 @@ docker network inspect bridge -f '{{(index .IPAM.Config 0).Gateway}}'
 ssh -N ec2-a          # 切れっぱなしが困るなら autossh
 ```
 
-確認 —— EC2 の上で:
+> **VS Code の接続に兼ねさせることもできます。** Remote-SSH が読むのは
+> **Windows 側の `%USERPROFILE%\.ssh\config`** なので、そちらの同じ Host に `RemoteForward`
+> を足せば、VS Code が繋いでいる間だけ穴が開き、この `ssh -N` は要らなくなります。
+> ただし転送元が **Windows の `127.0.0.1:8787`** になるので、WSL のハブに届くかは
+> WSL2 の localhost 転送しだいです。**下の確認が通れば OK**、駄目なら上の `ssh -N`（WSL から）に
+> 戻してください。
+
+確認 —— **EC2 のホストで**（Remote-SSH で入った先のターミナル）:
 
 ```sh
 ss -tlnp | grep 8787                        # 172.17.0.1:8787 で待っている
@@ -165,13 +196,14 @@ curl -s http://172.17.0.1:8787/healthz      # ハブが返す
 
 ## 3. コンテナからハブが見えるようにする
 
-コンテナを作るときに、いま穴を開けた `172.17.0.1` を名前で引けるようにします。
+いま穴を開けた `172.17.0.1` を、コンテナから名前で引けるようにします。
+`devcontainer.json` に1行足して、**Dev Containers: Rebuild Container**:
 
-```sh
-docker run --add-host=host.docker.internal:host-gateway ...
+```json
+"runArgs": ["--add-host=host.docker.internal:host-gateway"]
 ```
 
-compose なら:
+docker compose を使う devcontainer なら、compose 側に書きます。
 
 ```yaml
 services:
@@ -180,14 +212,8 @@ services:
       - "host.docker.internal:host-gateway"
 ```
 
-devcontainer.json なら:
-
-```json
-"runArgs": ["--add-host=host.docker.internal:host-gateway"]
-```
-
-**コンテナを作るときにしか効きません。** すでに動いているものは作り直してください
-（VS Code なら Dev Containers: Rebuild Container）。確認 —— コンテナの中で:
+**コンテナを作るときにしか効きません。** 開いたまま足しても反映されないので、
+**必ず Rebuild してください。** 確認 —— **コンテナの中で**（VS Code のターミナル）:
 
 ```sh
 getent hosts host.docker.internal          # アドレスが1行出れば OK
@@ -195,6 +221,8 @@ curl -s http://host.docker.internal:8787/healthz
 ```
 
 ## 4. 各コンテナにリレーを置く
+
+**コンテナの中で。** 見たいコンテナそれぞれでやります。
 
 ```sh
 curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o /usr/local/bin/fatmax
@@ -222,7 +250,7 @@ devcontainer なら、毎回やらなくて済むように入れておきます�
 
 ## 5. 各コンテナに hook を入れる
 
-**Claude Code を開いているディレクトリで**実行します。
+**コンテナの中で、Claude Code を開いているディレクトリで**実行します。
 
 ```sh
 curl -fsSL http://host.docker.internal:8787/setup.sh | sh
@@ -233,6 +261,8 @@ hook の宛先は **127.0.0.1:8788 固定**（同じコンテナの中のリレ�
 ハブが引っ越しても入れ直しは要りません。直すのはリレーの `--hub` だけです。
 
 ## 6. 確認
+
+**コンテナの中で。**
 
 ```sh
 fatmax status --hub http://host.docker.internal:8787
