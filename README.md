@@ -155,6 +155,49 @@ curl -fsSL http://<ハブの IP>:8787/setup.sh | sh
 `~/.claude/settings.json` に1行入るだけです（`--uninstall` で抜けます）。
 そのユーザーの**全プロジェクト**で効きます。**このあと Claude Code を再起動してください。**
 
+## 中継（リレー）を起動する
+
+**任意です。入れなくても動きます。** 置くと、hook の宛先が localhost 固定になり、
+ハブが落ちている間の記録も溜めて後から送ります。**1台に1つ**です。
+
+### apt で入れたマシン
+
+```sh
+sudoedit /etc/fatmax/relay.conf              # HUB=http://<ハブの IP>:8787 に書き換える
+systemctl --user enable --now fatmax-relay
+loginctl enable-linger "$USER"               # ログアウトで止めないため
+```
+
+**`HUB=` の書き換えを飛ばさないでください。** 既定は `http://127.0.0.1:8787`（自分自身）なので、
+ハブが別のマシンなら**何も届かないのに起動だけ成功します**。一番よくある事故です。
+
+あなたのユーザーで動かすのは、`~/.claude/projects` を読むためです（実行中に差し込んだ指示は
+hook では取れません）。
+
+### コンテナなど、パッケージを使わないマシン
+
+```sh
+curl -fsSL http://<ハブの IP>:8787/relay/bin/linux -o /tmp/fatmax
+chmod +x /tmp/fatmax
+nohup /tmp/fatmax relay --hub http://<ハブの IP>:8787 > /tmp/fatmax.log 2>&1 &
+```
+
+Docker Desktop の中からホストのハブを見るなら、`<ハブの IP>` は `host.docker.internal` です。
+
+**`relay` を省けません。** 実行ファイルは1個（`hub` / `relay` / `status`）で、役目を書かないと
+`不明な役目: --hub` で止まります。**黙ってハブとして起動しません**——中継のつもりのマシンで
+8787 が開くと、原因の分からない二重記録になるためです。
+
+`/tmp` にしてあるのは、置き場所を決めさせるとそこで手が止まるからです。引き換えに再起動で消えます。
+`/tmp` が `noexec` の環境では `Permission denied` になるので、`$HOME` の下に置いてください。
+
+### 動いているか
+
+```sh
+curl -s http://127.0.0.1:8788/version     # 中継は 8788 で待ち受けます
+fatmax status
+```
+
 ## そのマシンの「実行中に差し込んだ指示」も見たい場合
 
 hook では取れないぶんで、`~/.claude/projects` を読む必要があります。読めるのは
@@ -164,13 +207,10 @@ hook では取れないぶんで、`~/.claude/projects` を読む必要があり
 # 1台で完結するなら —— ハブを自分のユーザーで動かす
 sudo systemctl disable --now fatmax-hub
 systemctl --user enable --now fatmax-hub
-
-# 複数マシンを見るなら —— そのマシンに中継を置く
-sudoedit /etc/fatmax/relay.conf          # HUB=http://<ハブの IP>:8787
-systemctl --user enable --now fatmax-relay
-
-loginctl enable-linger "$USER"           # どちらもログアウト後に止めないため
+loginctl enable-linger "$USER"           # ログアウト後に止めないため
 ```
+
+複数マシンを見るなら、そのマシンに**中継を置きます**（上の「中継（リレー）を起動する」）。
 
 既定の `fatmax-hub`（system サービス）は専用ユーザーで動くのでホームを読めません。
 この機能だけが出ないだけで、会話・許可待ち・コストは通常どおり記録されます。
