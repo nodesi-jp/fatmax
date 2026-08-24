@@ -1,7 +1,7 @@
 # install — fatmax の入れ方
 
 **入れるのは集約する1台だけ**です。見たいマシンには何も置きません（→ [見たいマシンを繋ぐ](#見たいマシンを繋ぐ)）。
-いま配っているのは `0.1.54` です。外し方は [アンインストール](#アンインストールuninstall) にあります。
+いま配っているのは `0.1.76` です。外し方は [アンインストール](#アンインストールuninstall) にあります。
 
 **動くのは macOS / Linux（WSL を含む）です。**
 
@@ -217,7 +217,7 @@ fatmax status
 
 ```sh
 sudo apt update && sudo apt install --only-upgrade fatmax   # Debian / Ubuntu
-sudo dnf upgrade fatmax                                     # dnf 系（install では上がりません）
+sudo dnf upgrade --refresh fatmax                           # dnf 系（install では上がりません）
 
 sudo systemctl restart fatmax-hub          # ハブを system で動かしている場合
 systemctl --user restart fatmax-hub        # あなたのユーザで動かしている場合
@@ -232,7 +232,7 @@ fatmax status
 再起動を忘れると `fatmax status` がこう言います。**出なければ入れ替わっています。**
 
 ```
-⚠ 動いているのは 0.1.17 (…)。手元の実行ファイルは 0.1.54 (…)（再起動していません）
+⚠ 動いているのは 0.1.17 (…)。手元の実行ファイルは 0.1.76 (…)（再起動していません）
 ```
 
 `systemctl status fatmax-hub` に版は出ません（`Description` は固定の文字列です）。

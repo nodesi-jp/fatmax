@@ -15,6 +15,16 @@ fatmax が**気づかせます**。人間の無駄時間をゼロに近づける
 
 複数の PC（Mac / Linux / WSL）でも、その中で動く Docker コンテナでも、fatmaxに集まります。
 
+<!--
+  GitHub の README では **`<video>` は消えます**（Markdown API で確認: タグごと落ちて空の <p> になる）。
+  外部の mp4 を差しても、github.com の CSP の `media-src` は githubusercontent 系しか許さないので
+  再生できません。**画像なら残る**ので、見どころを GIF にして全編へのリンクにしてあります。
+  Pages のほう（index.html）は自分の紙なので、そちらには本物の <video> を置いています。
+-->
+[![放置すれば止まる／気づけばすぐ動く。同じ仕事でも、人が気づいた時間で終わりが変わる](img/demo.gif)](https://nodesi-jp.github.io/fatmax/movie/fatmax_landscape.mp4)
+
+▶ **[全編を見る（1分38秒・音あり）](https://nodesi-jp.github.io/fatmax/movie/fatmax_landscape.mp4)** ── 上は見どころだけの GIF（11秒・音なし）です。
+
 - **止まっているセッションが分かる。** 画面を見ていなくても、音で気づけます
 - 音で気づけるので、音が鳴るまで何しててもOK。ご飯を食べてても寝ててもサウンドで気がつけるので、**人間の耐久力しだいです。**
 - **会話がそのまま読める。** どのマシンのセッションでも、質問と選んだ答え、
@@ -118,7 +128,7 @@ fatmax が**気づかせます**。人間の無駄時間をゼロに近づける
 ## install
 
 **入れるのは集約する1台だけ**です。見たいマシンには何も置きません。
-いま配っているのは `0.1.54`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon です。
+いま配っているのは `0.1.76`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon です。
 
 - **[install](INSTALL.md)** — Ubuntu / Debian（apt）、Amazon Linux / Fedora / RHEL（dnf）、
   macOS。見たいマシンの繋ぎ方、
