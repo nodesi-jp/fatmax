@@ -1,13 +1,13 @@
 # install — fatmax の入れ方
 
 **入れるのは集約する1台だけ**です。見たいマシンには何も置きません（→ [見たいマシンを繋ぐ](#見たいマシンを繋ぐ)）。
-いま配っているのは `0.1.76` です。外し方は [アンインストール](#アンインストールuninstall) にあります。
+いま配っているのは `0.1.82` です。外し方は [アンインストール](#アンインストールuninstall) にあります。
 
 **動くのは macOS / Linux（WSL を含む）です。**
 
 > **Claude Code を Docker コンテナで動かしている場合**は、入れる場所と繋ぎ方が変わります。
 > → **[コンテナ1つで完結](INSTALL-container.md)**（ハブを起動するだけ）
-> ／ **[複数 EC2 × 複数コンテナ](INSTALL-ec2.md)**（手元の WSL にハブ、各コンテナに中継）
+> ／ **[複数 EC2 × 複数コンテナ](INSTALL-ec2.md)**（手元の WSL にハブ、各コンテナにウォッチャー）
 
 ## Ubuntu / Debian
 
@@ -128,47 +128,96 @@ curl -fsSL http://<ハブの IP>:8787/setup.sh | sh
 `~/.claude/settings.json` に1行入るだけです（`--uninstall` で抜けます）。
 そのユーザーの**全プロジェクト**で効きます。**このあと Claude Code を再起動してください。**
 
-## 中継（リレー）を起動する
+これが**そのマシンを繋ぐ一式**です ── hook を入れ、実行ファイルを置き、ハブの宛先を保存します。
 
-**任意です。入れなくても動きます。** 置くと、hook の宛先が localhost 固定になり、
-ハブが落ちている間の記録も溜めて後から送ります。**1台に1つ**です。
+> **`setup.sh` と `fatmax setup` は別物です。**
+>
+> | | 何をするか | いつ |
+> |---|---|---|
+> | `curl …/setup.sh \| sh` | 繋ぐ一式（hook ＋ 実行ファイル ＋ 宛先） | 初回 |
+> | `fatmax setup` | **宛先だけ**決め直す（`~/.fatmax/hub`） | ハブが引っ越したとき |
+>
+> 以前は宛先が hook の1行に焼かれていたので、引っ越すたびに `setup.sh` の入れ直しが
+> 要りました。いまは `fatmax setup` だけで済みます。
 
-### apt で入れたマシン
+## ハブの宛先を教える
+
+見たいマシンに実行ファイルがある場合（apt / dnf で入れた、または下の手順で置いた）、
+**そのマシンがどのハブへ送るかを1箇所で決めます**。
 
 ```sh
-sudoedit /etc/fatmax/relay.conf              # HUB=http://<ハブの IP>:8787 に書き換える
+fatmax setup
+```
+
+選択肢が出ます。
+
+```
+  1) http://127.0.0.1:8787              このマシンでハブが動いている
+  2) http://host.docker.internal:8787   コンテナの中から、ホスト側のハブへ
+  3) 自分で入力する
+```
+
+聞かれたくないときは `fatmax setup --hub http://<ハブの IP>:8787`、
+いま何が入っているかは `fatmax setup --show` です。
+
+保存先は **`~/.fatmax/hub` の1行**だけ。**毎回読み直す**ので、ハブが引っ越したら
+この1行を書き換えるだけで済みます（入れ直しは要りません）。
+
+> **2番目が要る理由。** コンテナは**自分の `127.0.0.1` を持っています**。そこを指すと
+> 自分自身を見に行って届きません。ホスト側のハブへは `host.docker.internal` です。
+
+## ウォッチャー（旧・ウォッチャー）
+
+**起動する必要はありません。** hook が必要なときに起こします。
+
+置くと2つ増えます ── **ハブが落ちている間の記録をディスクに溜めて後から送る**のと、
+**実行中に差し込んだ指示・Esc で止めた印**（`~/.claude/projects` を読んで拾う）。
+**1台に1つ**です。
+
+### 手で動かす・止める
+
+```sh
+fatmax watch          # 宛先は ~/.fatmax/hub から読む
+fatmax status         # 動いているか・届いているか
+fatmax flush          # 溜まっているぶんを今すぐ送る（ハブを直した直後に）
+```
+
+`fatmax relay` は古い呼び名として動きます（settings.json や unit に焼かれているため）。
+
+### ログイン時にも上げたい
+
+**使っていない間も「繋がっている」と言い切りたいとき**だけです。普段は要りません
+（使っていない間は止まっているのが正常で、次の hook が起こします）。
+
+```sh
+fatmax watch --keep      # macOS は LaunchAgent、Linux は systemd --user に登録
+fatmax watch --no-keep   # やめる
+```
+
+**apt / dnf で入れたマシンは unit が同梱されている**ので、そちらを使ってください
+（`--keep` は重ねないよう断ります）。
+
+```sh
+sudoedit /etc/fatmax/relay.conf              # HUB=http://<ハブの IP>:8787
 systemctl --user enable --now fatmax-relay
 loginctl enable-linger "$USER"               # ログアウトで止めないため
 ```
 
-**`HUB=` の書き換えを飛ばさないでください。** 既定は `http://127.0.0.1:8787`（自分自身）なので、
-ハブが別のマシンなら**何も届かないのに起動だけ成功します**。一番よくある事故です。
+あなたのユーザーで動かすのは、`~/.claude/projects` を読むためです。
 
-あなたのユーザーで動かすのは、`~/.claude/projects` を読むためです（実行中に差し込んだ指示は
-hook では取れません）。
+### パッケージの無いマシン（コンテナなど）
 
-### コンテナなど、パッケージを使わないマシン
-
-**実行ファイルはここから落とします**（ハブからではありません。理由は下）。
+`setup.sh` が実行ファイルも置きます（`~/.fatmax/bin/fatmax`）。手で落とすなら:
 
 ```sh
-curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o /tmp/fatmax   # arm64 は fatmax-linux-aarch64
-chmod +x /tmp/fatmax
-nohup /tmp/fatmax relay --hub http://<ハブの IP>:8787 > /tmp/fatmax.log 2>&1 &
+curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o ~/.fatmax/bin/fatmax   # arm64 は …-aarch64
+chmod +x ~/.fatmax/bin/fatmax
+~/.fatmax/bin/fatmax setup --hub http://<ハブの IP>:8787
 ```
 
-Docker Desktop の中からホストのハブを見るなら、`<ハブの IP>` は `host.docker.internal` です。
 CPU は `uname -m` で分かります（`x86_64` / `aarch64`）。
-
-コンテナの作り方（`--add-host`）や、EC2 から手元のハブへ SSH で繋ぐところまで含めた手順は
+コンテナの作り方（`--add-host`）や、EC2 から手元のハブへ SSH で繋ぐ手順は
 **[複数 EC2 × 複数コンテナ](INSTALL-ec2.md)** にあります。
-
-`relay` は省けます（`fatmax --hub URL` でも中継として動きます）。`--hub` を取るのは中継だけなので、
-役目が一意に決まるためです。**逆は許しません**——役目も `--hub` も無いと `不明な役目` で止まります。
-中継のつもりのマシンで 8787 が開くと、原因の分からない二重記録になるためです。
-
-`/tmp` にしてあるのは、置き場所を決めさせるとそこで手が止まるからです。引き換えに再起動で消えます。
-`/tmp` が `noexec` の環境では `Permission denied` になるので、`$HOME` の下に置いてください。
 
 > **ハブからは落とせません。** 以前はハブが各プラットフォームの実行ファイルを内蔵して
 > `/relay/bin/…` で配っていましたが、**やめました**（ハブが 10MB → 4.7MB）。
@@ -178,7 +227,7 @@ CPU は `uname -m` で分かります（`x86_64` / `aarch64`）。
 ### 動いているか
 
 ```sh
-curl -s http://127.0.0.1:8788/version     # 中継は 8788 で待ち受けます
+curl -s http://127.0.0.1:8788/version     # ウォッチャーは 8788 で待ち受けます
 fatmax status
 ```
 
@@ -190,8 +239,8 @@ fatmax status
 **サービスにする必要はありません。** 端末で動かせば、それで読めます。
 
 ```sh
-fatmax hub                                   # 1台で完結するなら、これだけ
-fatmax relay --hub http://<ハブの IP>:8787   # 複数マシンを見るなら、そのマシンで中継を
+fatmax hub      # 1台で完結するなら、これだけ
+fatmax watch    # 複数マシンを見るなら、そのマシンでウォッチャーを（宛先は fatmax setup で）
 ```
 
 サービスにするのは「ログアウトしても動き続けてほしい」ときだけです。
@@ -221,7 +270,7 @@ sudo dnf upgrade --refresh fatmax                           # dnf 系（install 
 
 sudo systemctl restart fatmax-hub          # ハブを system で動かしている場合
 systemctl --user restart fatmax-hub        # あなたのユーザで動かしている場合
-systemctl --user restart fatmax-relay      # 中継を入れている場合
+systemctl --user restart fatmax-relay      # ウォッチャーを unit で入れている場合
 
 fatmax status
 ```
@@ -232,7 +281,7 @@ fatmax status
 再起動を忘れると `fatmax status` がこう言います。**出なければ入れ替わっています。**
 
 ```
-⚠ 動いているのは 0.1.17 (…)。手元の実行ファイルは 0.1.76 (…)（再起動していません）
+⚠ 動いているのは 0.1.17 (…)。手元の実行ファイルは 0.1.82 (…)（再起動していません）
 ```
 
 `systemctl status fatmax-hub` に版は出ません（`Description` は固定の文字列です）。
@@ -256,7 +305,7 @@ curl -fsSL http://<ハブの IP>:8787/setup.sh | sh -s -- --uninstall
 
 ```sh
 sudo systemctl disable --now fatmax-hub      # 止めるだけならここまで
-systemctl --user disable --now fatmax-relay  # 中継を置いていたら（user サービスなので各自で）
+systemctl --user disable --now fatmax-relay  # ウォッチャーを unit で入れていたら（各自で）
 sudo apt purge fatmax                        # dnf 系なら sudo dnf remove fatmax
 ```
 

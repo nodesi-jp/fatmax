@@ -1,14 +1,14 @@
 Package: fatmax
-Version: 0.1.76
+Version: 0.1.82
 Architecture: arm64
 Maintainer: fatmax <kouji_morimoto@nodesi.jp>
-Installed-Size: 5424
+Installed-Size: 5416
 Depends: adduser
-Filename: pool/main/f/fatmax/fatmax_0.1.76_arm64.deb
-Size: 1739128
-MD5sum: db7b819537b75b24dbc7a61d34fd48bc
-SHA1: 72323620b6d90df5f315b2a525e9ea36175c5308
-SHA256: 21c3c0db97ed786e8e3b5d6dc7f0fcd749fcf56de7817dbdb606ddce2d9f22b4
+Filename: pool/main/f/fatmax/fatmax_0.1.82_arm64.deb
+Size: 1735280
+MD5sum: 90cb5596fe320228234465bd9956f092
+SHA1: e9bd2966be9be46a1375dcfb96f0e38219c6cc1e
+SHA256: 5daccfc19785254bf02d44667109d82553ed55ae26da89597a9c0f4a3612d336
 Section: utils
 Priority: optional
 Homepage: https://github.com/nodesi-jp/fatmax
@@ -19,9 +19,9 @@ Description: Claude Code のセッションを1画面に集約する (LAN 専用
  実行ファイルは1つで、起動時に役目を選びます:
  .
    fatmax hub      集約する1台で。画面と記録はここに集まる
-   fatmax relay    見たいマシンに置く中継（任意）
+   fatmax relay    見たいマシンに置くウォッチャー（任意）
  .
- 1台だけで使うなら中継は要りません。hook はハブへ直接届き、そのマシンの
+ 1台だけで使うならウォッチャーは要りません。hook はハブへ直接届き、そのマシンの
  transcript もハブが自分で読みます。
  .
  認証はありません。LAN 内で使う前提です。

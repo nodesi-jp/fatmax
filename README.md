@@ -128,15 +128,15 @@ fatmax が**気づかせます**。人間の無駄時間をゼロに近づける
 ## install
 
 **入れるのは集約する1台だけ**です。見たいマシンには何も置きません。
-いま配っているのは `0.1.76`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon です。
+いま配っているのは `0.1.82`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon です。
 
 - **[install](INSTALL.md)** — Ubuntu / Debian（apt）、Amazon Linux / Fedora / RHEL（dnf）、
   macOS。見たいマシンの繋ぎ方、
-  中継、確認、アンインストールまで
+  ウォッチャー、確認、アンインストールまで
 - **[コンテナ1つで完結](INSTALL-container.md)** — Docker コンテナで Claude Code を動かしていて、
   そのコンテナだけ見る。**ハブを起動するだけ**
 - **[複数 EC2 × 複数コンテナ](INSTALL-ec2.md)** — 手元の WSL Ubuntu にハブ、
-  EC2 のコンテナそれぞれに中継
+  EC2 のコンテナそれぞれにウォッチャー
 
 ```sh
 sudo apt install fatmax && sudo systemctl enable --now fatmax-hub   # ← 鍵と sources.list の追加は INSTALL.md
