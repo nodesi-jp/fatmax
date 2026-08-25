@@ -128,7 +128,7 @@ fatmax が**気づかせます**。人間の無駄時間をゼロに近づける
 ## install
 
 **入れるのは集約する1台だけ**です。見たいマシンには何も置きません。
-いま配っているのは `0.1.84`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon です。
+いま配っているのは `0.1.92`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon です。
 
 - **[install](INSTALL.md)** — Ubuntu / Debian（apt）、Amazon Linux / Fedora / RHEL（dnf）、
   macOS。見たいマシンの繋ぎ方、
@@ -137,6 +137,8 @@ fatmax が**気づかせます**。人間の無駄時間をゼロに近づける
   そのコンテナだけ見る。**ハブを起動するだけ**
 - **[複数 EC2 × 複数コンテナ](INSTALL-ec2.md)** — 手元の WSL Ubuntu にハブ、
   EC2 のコンテナそれぞれにウォッチャー
+- **[Windows + WSL(Ubuntu)](INSTALL-wsl.md)** — ハブを WSL の Ubuntu で動かし、
+  Windows 側の Claude Code を記録する。署名の問題を丸ごと避けられます
 
 ```sh
 sudo apt install fatmax && sudo systemctl enable --now fatmax-hub   # ← 鍵と sources.list の追加は INSTALL.md
