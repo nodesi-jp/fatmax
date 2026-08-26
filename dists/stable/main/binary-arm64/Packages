@@ -1,14 +1,14 @@
 Package: fatmax
-Version: 0.1.92
+Version: 0.1.106
 Architecture: arm64
 Maintainer: fatmax <kouji_morimoto@nodesi.jp>
-Installed-Size: 5416
+Installed-Size: 5480
 Depends: adduser
-Filename: pool/main/f/fatmax/fatmax_0.1.92_arm64.deb
-Size: 1735516
-MD5sum: 5dbbe730568aa170b044e243815fbb12
-SHA1: 4e77fb4dde402bdb48b06743295db10079353803
-SHA256: 98b005a33b4ec07b2263d026b84fa4d4ca68bababb5271ea423ec575e9856bce
+Filename: pool/main/f/fatmax/fatmax_0.1.106_arm64.deb
+Size: 1758608
+MD5sum: ec4b0ad4e31ead00fa7d0eb19db6e9f1
+SHA1: 460a5954a50095bba80cf0b236efe0a898963e0f
+SHA256: 4c259a23160d641f518a52cb4109017e79605c2634a92759e2c940dedf15a222
 Section: utils
 Priority: optional
 Homepage: https://github.com/nodesi-jp/fatmax
