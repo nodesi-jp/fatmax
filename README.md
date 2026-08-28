@@ -128,7 +128,7 @@ fatmax が**気づかせます**。人間の無駄時間をゼロに近づける
 ## install
 
 **入れるのは集約する1台だけ**です。見たいマシンには何も置きません。
-いま配っているのは `0.1.127`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon です。
+いま配っているのは `0.1.128`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon です。
 
 - **[install](INSTALL.md)** — Ubuntu / Debian（apt）、Amazon Linux / Fedora / RHEL（dnf）、
   macOS。見たいマシンの繋ぎ方、
