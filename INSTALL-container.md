@@ -4,7 +4,7 @@ Claude Code を **Docker コンテナ1つ**で動かしていて、そのコン�
 **ハブを起動するだけ**で、ウォッチャー（ウォッチャー）も手元の準備も要りません。
 
 **CPU は amd64（x86_64）**、コンテナは **dnf 系**（Amazon Linux / Fedora / RHEL）を前提に
-書いてあります。いま配っているのは `0.1.139` です。
+書いてあります。いま配っているのは `0.1.140` です。
 やめ方は [アンインストール](#アンインストール) にあります。
 
 - 複数の EC2 に散らばったコンテナを1画面に集めたい → **[複数 EC2 × 複数コンテナ](INSTALL-ec2.md)**
@@ -110,7 +110,7 @@ nohup fatmax hub --db "$PWD/.fatmax/fatmax.db" > /tmp/fatmax-hub.log 2>&1 &
 curl -fsSL http://127.0.0.1:8787/setup.sh | sh
 ```
 
-`~/.claude/settings.json` に hook と statusLine が入るだけで、置くファイルはありません。
+`~/.claude/settings.json` に hook と OTel の設定が入るだけで、置くファイルはありません（ステータス行は既定で入れません。出したいなら `--statusline`）。
 **このあと Claude Code を再起動してください。**
 
 - **2箇所に入れないこと。** user と project の両方にあると足し算で読まれ、
@@ -203,7 +203,7 @@ fatmax status
 | 作り直したら過去のコストも会話も消えた | `--db` を付けずに起動しています。`fatmax status` の `記録` が `~/.fatmax/…` ならそれです |
 | `fatmax: command not found` | symlink はコンテナの中なので Rebuild で消えます。1. の `ln -sf` だけ張り直す |
 | 版が古いまま | `.fatmax/fatmax` は**残る**ので上がりません。1. の最後で消して取り直す |
-| 接続が止まらない・ポートが枯れる | ハブとウォッチャーの版がズレていると1秒ごとに繋ぎ直します。両方を 0.1.139 以上へ。手順は [INSTALL-ec2.md](INSTALL-ec2.md) の「接続が止まらない・ポートが枯れる（調べ方）」 |
+| 接続が止まらない・ポートが枯れる | ハブとウォッチャーの版がズレていると1秒ごとに繋ぎ直します。両方を 0.1.140 以上へ。手順は [INSTALL-ec2.md](INSTALL-ec2.md) の「接続が止まらない・ポートが枯れる（調べ方）」 |
 
 ---
 

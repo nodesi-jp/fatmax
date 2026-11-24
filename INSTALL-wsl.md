@@ -7,7 +7,7 @@
 SmartScreen と Smart App Control に止められます。Linux の実行ファイルにはどちらも
 効かないので、**常駐させるハブだけ WSL に置くと署名の問題を丸ごと避けられます**。
 
-いま配っているのは `0.1.139` です。
+いま配っているのは `0.1.140` です。
 
 ## 前提
 
@@ -21,7 +21,7 @@ SmartScreen と Smart App Control に止められます。Linux の実行ファ�
 | どこ | 何を入れるか | 役目 |
 |---|---|---|
 | **WSL Ubuntu** | `fatmax`（apt） | ハブ。記録を溜めて画面を出す |
-| **Windows** | `settings.json` の hook + statusLine | Claude Code の動きをハブへ送る |
+| **Windows** | `settings.json` の hook + OTel | Claude Code の動きをハブへ送る |
 | **Windows**（任意） | `fatmax.exe` | 好きなマシン名を付ける・ハブが落ちている間ぶんを残す |
 
 Windows と WSL2 は **localhost を共有**します。Windows から `127.0.0.1:8787` を叩けば
@@ -92,7 +92,8 @@ http://127.0.0.1:8787/
 irm http://127.0.0.1:8787/setup.ps1 | iex
 ```
 
-`settings.json` に hook と statusLine を足します。**あなた自身の設定は消しません。**
+`settings.json` に hook と OTel の設定を足します。**あなた自身の設定は消しません。**
+ステータス行は既定で入れません（出したいなら `-StatusLine`）。
 
 保存先は `-Scope` で選べます（既定は `user`）。**2箇所に入れるとイベントが二重に記録され、
 回数もコストも倍になります。** 入っていれば警告が出ます。
