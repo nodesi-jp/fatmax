@@ -1,7 +1,7 @@
 # install — fatmax の入れ方
 
-**入れるのは集約する1台だけ**です。見たいマシンには何も置きません（→ [見たいマシンを繋ぐ](#見たいマシンを繋ぐ)）。
-いま配っているのは `0.1.144` です。外し方は [アンインストール](#アンインストールuninstall) にあります。
+**パッケージを入れるのは集約する1台（ハブ）だけ**で足ります。見たいマシンには `setup.sh` が hook とウォッチャーを置きます（→ [見たいマシンを繋ぐ](#見たいマシンを繋ぐ)）。
+いま配っているのは `0.1.150` です。外し方は [アンインストール](#アンインストールuninstall) にあります。
 
 **動くのは macOS / Linux（WSL を含む）です。**
 
@@ -115,7 +115,7 @@ fatmax --version
 curl -fsSL http://192.168.0.19:8787/setup.sh | sh
 ```
 
-置くものはありません。`settings.json` に hook と OTel の設定が入るだけです
+`settings.json` に hook と OTel の設定が入り、パッケージの無いマシンにはウォッチャーの実行ファイルが置かれます
 （ステータス行は既定で入れません。出したいなら `--statusline`）
 （詳しくは [見たいマシンを繋ぐ](#見たいマシンを繋ぐ)）。
 
@@ -123,14 +123,15 @@ curl -fsSL http://192.168.0.19:8787/setup.sh | sh
 
 ## 見たいマシンを繋ぐ
 
-**繋ぐ側には何も置きません。** そのマシンで1回だけ:
+そのマシンで1回だけ:
 
 ```sh
 curl -fsSL http://<ハブの IP>:8787/setup.sh | sh
 ```
 
-`~/.claude/settings.json` に1行入るだけです（`--uninstall` で抜けます）。
+`~/.claude/settings.json` に hook が入ります（`--uninstall` で抜けます）。
 そのユーザーの**全プロジェクト**で効きます。**このあと Claude Code を再起動してください。**
+**[ウォッチャー](#ウォッチャー)を動かすまで、記録はハブへ上がりません**（溜まるだけで消えはしません）。
 
 これが**そのマシンを繋ぐ一式**です ── hook を入れ、実行ファイルを置き、ハブの宛先を保存します。
 
@@ -143,6 +144,42 @@ curl -fsSL http://<ハブの IP>:8787/setup.sh | sh
 >
 > 以前は宛先が hook の1行に焼かれていたので、引っ越すたびに `setup.sh` の入れ直しが
 > 要りました。いまは `fatmax setup` だけで済みます。
+
+<details>
+<summary>root のコンテナ（sudo が無い）を、LAN にあるハブへ繋ぐ</summary>
+
+devcontainer などで、プロンプトが `root@<英数字>:/workspaces#` の形のときです。
+**`sudo` を外す**のと、**名前を付ける**のが普通の手順との違いです。
+
+```sh
+# 1. apt で入れる（sudo を外しただけ。dnf 系なら上の dnf の2行から sudo を外す）
+curl -fsSL https://nodesi-jp.github.io/fatmax/KEY.gpg -o /usr/share/keyrings/fatmax.gpg
+echo "deb [signed-by=/usr/share/keyrings/fatmax.gpg] https://nodesi-jp.github.io/fatmax stable main" > /etc/apt/sources.list.d/fatmax.list
+apt update && apt install -y fatmax
+fatmax --version
+
+# 2. 名前を付ける（好きな名前でよい。画面のマシン名になる）
+echo 'dev-linux' > ~/.claude/fatmax-host
+
+# 3. ハブに届くか確かめてから、宛先と hook を入れる
+curl -fsS -m 5 -o /dev/null http://<ハブの IP>:8787/healthz && echo 届く
+curl -fsSL http://<ハブの IP>:8787/setup.sh | sh
+
+# 4. ウォッチャーを動かす（画面から返信も受けるなら --replies。下の「画面から返信する」）
+nohup fatmax watch > /tmp/fatmax-watch.log 2>&1 &
+fatmax status
+```
+
+- **`sudo tee` のまま叩くと `sudo: command not found` で止まります。** 1行目は
+  `curl: (23) Failed writing body` も一緒に出ますが、原因は sudo のほうです
+- **2. の名前を付けないと、コンテナを作り直すたびに別のマシンとして出ます。**
+  名前を付けないと hostname（コンテナの ID）が使われ、作り直すと変わるためです
+- 3. で「届く」と出なければ、コンテナから LAN へ出られていません（ハブが別のネットワークにある場合は
+  [複数 EC2 × 複数コンテナ](INSTALL-ec2.md) の SSH で繋ぐ手順）
+- **作り直す（Rebuild）と 1〜4 は全部消えます**（パッケージも hook もコンテナの中にあるため）。
+  もう一度叩いてください。**ウォッチャーはコンテナを再起動すると止まります。**
+  止まっている間の記録は溜まるだけで消えないので、4. の `nohup` の行を叩き直せば流れます
+</details>
 
 ## ハブの宛先を教える
 
@@ -226,10 +263,11 @@ CPU は `uname -m` で分かります（`x86_64` / `aarch64`）。
 コンテナの作り方（`--add-host`）や、EC2 から手元のハブへ SSH で繋ぐ手順は
 **[複数 EC2 × 複数コンテナ](INSTALL-ec2.md)** にあります。
 
-> **ハブからは落とせません。** 以前はハブが各プラットフォームの実行ファイルを内蔵して
-> `/relay/bin/…` で配っていましたが、**やめました**（ハブが 10MB → 4.7MB）。
-> いまの `/relay/bin/…` はハブの隣にファイルがあるときだけ応え、apt で入れたハブでは 404 です。
-> 配る場所をここ1つに寄せてあるので、版がズレる余地もありません。
+> **apt / dnf で入れたハブからは、ハブと同じ CPU のぶんしか落とせません。** 以前はハブが
+> 各プラットフォームの実行ファイルを内蔵して配っていましたが、**やめました**（ハブが 10MB → 4.7MB）。
+> いまの `/watch/bin/…` は、ハブ自身と、ハブの隣に置いてあるファイルだけを配ります。
+> [Docker で動かしたハブ](INSTALL-docker.md)は macOS / Linux（amd64 / arm64）を隣に置いてあるので全部落とせます。
+> それ以外は、上の手順でこのサイトから落としてください。
 
 ### 動いているか
 
@@ -288,7 +326,7 @@ fatmax status
 再起動を忘れると `fatmax status` がこう言います。**出なければ入れ替わっています。**
 
 ```
-⚠ 動いているのは 0.1.17 (…)。手元の実行ファイルは 0.1.144 (…)（再起動していません）
+⚠ 動いているのは 0.1.17 (…)。手元の実行ファイルは 0.1.150 (…)（再起動していません）
 ```
 
 `systemctl status fatmax-hub` に版は出ません（`Description` は固定の文字列です）。
@@ -319,7 +357,7 @@ fatmax --version                          # ウォッチャー側
 curl -s http://127.0.0.1:8787/healthz     # ハブ側
 ```
 
-0.1.144 以降は、①古い名前でも訊き直す ②空振りしたら間隔を倍にする（1秒 → 最大60秒）
+0.1.150 以降は、①古い名前でも訊き直す ②空振りしたら間隔を倍にする（1秒 → 最大60秒）
 の2つが入っているので、版がズレてもこの輪には入りません。**それでも両側を揃えてください。**
 
 ## アンインストール（uninstall）

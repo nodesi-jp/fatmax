@@ -2,7 +2,11 @@
 # 中身は公開の apt リポジトリの fatmax。新しい版が出たら同じ1行（--build）で上がる。
 #
 #   この compose.yaml と Dockerfile を同じフォルダに置いて:
-#   FATMAX_LAN_IP=192.168.0.21 docker compose up -d --build
+#   echo FATMAX_LAN_IP=192.168.0.21 > .env      （下の FATMAX_LAN_IP。IP の引き方もそこ）
+#   docker compose up -d --build
+#
+#   **`.env` に書く。export やその場の `FATMAX_LAN_IP=… docker compose …` にしない** ——
+#   版を上げるときに別のシェルで叩くと渡らず、空のまま作り直される（エラーは出ない）。
 #
 #   → 画面:   http://<このマシンの IP>:8787
 #   → ログ:   docker compose logs -f hub
@@ -25,6 +29,7 @@ services:
     restart: unless-stopped
     ports:
       # ポートを変えるなら左だけ（FATMAX_PORT=9000）。右の 8787 は変えない。
+      # 起動ログの :8787 はコンテナの中の番号のまま（setup.sh は画面を開いたポートで作られる）。
       - "${FATMAX_PORT:-8787}:8787"
     environment:
       # 日の境目（日別の金額・検索の「今日」・1日ぶんのタイムライン）。
@@ -36,10 +41,10 @@ services:
       # LAN の IP で開けば Host ヘッダがそのまま使われるので、渡さなくても正しく出る。
       # 渡さずに localhost から setup.sh を取ると、**コンテナの IP（172.x）が焼かれて届かない**。
       #
-      # DHCP で IP が変わったら、渡し直して `docker compose up -d`。
-      # **en0 と決め打ちしない**（Wi-Fi が en1 の Mac がある。実際この Mac がそう）:
-      #   macOS:  FATMAX_LAN_IP=$(ipconfig getifaddr "$(route -n get default | awk '/interface:/{print $2}')")
-      #   Linux:  FATMAX_LAN_IP=$(ip route get 1.1.1.1 | awk '{for(i=1;i<NF;i++) if($i=="src") print $(i+1)}')
+      # DHCP で IP が変わったら、.env を書き直して `docker compose up -d`。
+      # **en0 と決め打ちしない**（Wi-Fi が en1 の Mac がある）:
+      #   Linux:  echo "FATMAX_LAN_IP=$(ip route get 1.1.1.1 | awk '{for(i=1;i<NF;i++) if($i=="src") print $(i+1)}')" > .env
+      #   macOS:  echo "FATMAX_LAN_IP=$(ipconfig getifaddr "$(route -n get default | awk '/interface:/{print $2}')")" > .env
       FATMAX_LAN_IP: ${FATMAX_LAN_IP:-}
     volumes:
       - data:/var/lib/fatmax

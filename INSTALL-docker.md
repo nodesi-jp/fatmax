@@ -2,7 +2,7 @@
 
 **ハブ（画面と記録を集める1台）を Docker のコンテナで動かす**手順です。
 中身は [apt で入れる](INSTALL.md) のと同じ `fatmax` パッケージで、Debian のコンテナに入れて動かすだけです。
-systemd の無いマシンや、ホストに直接入れたくないときに使います。いま配っているのは `0.1.144` です。
+systemd の無いマシンや、ホストに直接入れたくないときに使います。いま配っているのは `0.1.150` です。
 
 - コンテナの中で Claude Code を動かしていて、そのコンテナだけ見たい → **[コンテナ1つで完結](INSTALL-container.md)**
 - Docker を使わない入れ方 → **[install](INSTALL.md)**
@@ -26,20 +26,28 @@ curl -fsSLO https://nodesi-jp.github.io/fatmax/docker/compose.yaml
 ## 2. 起動する
 
 ```sh
-# ほかのマシンから届く、このマシンの IP を渡す
-# macOS（Wi-Fi が en0 とは限らないので、既定の経路の口から引く）
-export FATMAX_LAN_IP=$(ipconfig getifaddr "$(route -n get default | awk '/interface:/{print $2}')")
+# ほかのマシンから届く、このマシンの IP を同じフォルダの .env に書く
 # Linux
-export FATMAX_LAN_IP=$(ip route get 1.1.1.1 | awk '{for(i=1;i<NF;i++) if($i=="src") print $(i+1)}')
+echo "FATMAX_LAN_IP=$(ip route get 1.1.1.1 | awk '{for(i=1;i<NF;i++) if($i=="src") print $(i+1)}')" > .env
+# macOS（Wi-Fi が en0 とは限らないので、既定の経路の口から引く）
+echo "FATMAX_LAN_IP=$(ipconfig getifaddr "$(route -n get default | awk '/interface:/{print $2}')")" > .env
 
+cat .env                     # FATMAX_LAN_IP=192.168.0.21 のように IP が入っていること
 docker compose up -d --build
 docker compose logs hub
 ```
 
+**`export` ではなく `.env` に書く。** Compose はこのフォルダの `.env` を毎回読みます。
+`export` だと、版を上げるときに別のシェルで叩いた `docker compose up -d --build` に渡らず、
+**空のまま作り直されます**（エラーは出ません。下の注記の「渡し忘れ」と同じことになる）。
+`TZ` と `FATMAX_PORT` も同じ `.env` に書けます。
+
+Linux で `docker` に `sudo` が要るなら、`sudo docker compose …` でそのまま動きます（`.env` はファイルなので `sudo` でも読まれる）。
+
 こう出れば動いています。初回は 20 秒ほどかかります。
 
 ```
-fatmax hub  版 0.1.144 (…)
+fatmax hub  版 0.1.150 (…)
 fatmax hub listening on http://0.0.0.0:8787/
   LAN:   http://192.168.0.21:8787/  (FATMAX_LAN_IP)
   setup: curl -fsSL http://192.168.0.21:8787/setup.sh | sh
@@ -52,7 +60,27 @@ fatmax hub listening on http://0.0.0.0:8787/
 |---|---|---|
 | `FATMAX_LAN_IP` | なし | **ほかのマシンから届く、このマシンの IP**。下の注記 |
 | `TZ` | `Asia/Tokyo` | 日の境目。日別の金額・検索の「今日」・1日ぶんのタイムラインはこの土地の 0時で切る |
-| `FATMAX_PORT` | `8787` | 外に出すポート（compose.yaml の左側だけ変わる） |
+| `FATMAX_PORT` | `8787` | 外に出すポート（compose.yaml の左側だけ変わる）。**起動ログの `:8787` はコンテナの中の番号なので変わりません** —— 変えたら `setup:` の1行のポートだけ書き換える（`curl -fsSL http://<IP>:<FATMAX_PORT>/setup.sh \| sh`。setup.sh の中身は、取りに行ったポートで作られる） |
+
+### rootless の Docker で動かすとき
+
+起動はそのまま通りますが、**2つ足さないと使えません**。
+
+```sh
+# ① LAN から届くようにする（LAN の中だけ。ハブには認証が無いので外には開けない）
+sudo ufw allow from 192.168.0.0/24 to any port 8787 proto tcp
+# ② ログアウト・再起動で止めない
+systemctl --user enable docker
+sudo loginctl enable-linger $(whoami)
+```
+
+- **① ふつうの Docker は ufw を素通りしますが、rootless は通りません。** ふつうの Docker は自分で
+  iptables に穴を開けます。rootless はふつうのプロセスとしてポートを開くので、ufw がそのまま効きます。
+  症状は「ハブのマシンの中からは開けるのに、ほかのマシンからは**断られずに時間切れ**」です
+  （ping も ssh も通るので、ネットワークの問題に見えます）
+- **② rootless の Docker は、あなたのユーザの systemd で動いています。** ログアウトするとそれごと止まり、
+  `restart: unless-stopped` も Docker 自体が動いていないと効きません
+- 繋いできた相手の IP はハブに伝わりませんが、fatmax は使っていないので影響はありません
 
 ## 3. 各マシンを繋ぐ
 
@@ -89,7 +117,7 @@ docker compose up -d --build
   入る宛先**と起動時の案内だけで、LAN の IP で開けばそちらがそのまま使われます。
   渡し忘れると、localhost から取った setup.sh に**コンテナの IP が入って届きません**。
   **読めない値なら起動を断ります**（打ち間違いで黙ってコンテナの IP に落ちるのが一番困るため）。
-  DHCP で IP が動いたら渡し直して `docker compose up -d`
+  DHCP で IP が動いたら `.env` を書き直して `docker compose up -d`
 - **時間帯を渡さないと、日の境目が朝 9時にずれます。** コンテナの既定は UTC です。
   日本以外なら `TZ=America/Los_Angeles docker compose up -d` のように渡します
 - **ほかのマシンに配るウォッチャー**（setup.sh がパッケージの無いマシンに置くもの）は、
@@ -99,6 +127,8 @@ docker compose up -d --build
 ## 今の DB を持って行く
 
 ほかのマシンで動かしていたハブの記録を引き継ぐなら、**コンテナを最初に起動する前に**入れます。
+2. の `.env` は書いておき、`docker compose up` の代わりに下の4行を叩きます。
+DB がほかのマシンにあるなら、1行目はそのマシンで叩いて、できたファイルを `scp` でこちらへ運びます。
 
 ```sh
 sqlite3 ~/.fatmax/fatmax.db ".backup /tmp/fatmax-copy.db"   # 動いているハブのままでよい（1つのファイルに固まる）
