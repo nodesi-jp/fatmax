@@ -1,0 +1,53 @@
+# fatmax のハブを Docker で動かす。
+# 中身は公開の apt リポジトリの fatmax。新しい版が出たら同じ1行（--build）で上がる。
+#
+#   この compose.yaml と Dockerfile を同じフォルダに置いて:
+#   FATMAX_LAN_IP=192.168.0.21 docker compose up -d --build
+#
+#   → 画面:   http://<このマシンの IP>:8787
+#   → ログ:   docker compose logs -f hub
+#   → 止める: docker compose down          （記録はボリュームに残る。-v を付けると消える）
+#
+# 手順と注意: https://nodesi-jp.github.io/fatmax/INSTALL-docker.md
+#
+# 記録はボリューム `fatmax_data` の /var/lib/fatmax/fatmax.db に残ります。
+# 作り直し（--build）でもコンテナの削除でも消えません。
+# **今の DB を持って行くなら、最初に起動する前に**（INSTALL-docker.md「今の DB を持って行く」）。
+
+# 名前を決めておく。決めないとフォルダ名の `docker` になり、ボリュームが `docker_…` になる
+# （ほかの何かと名前がぶつかっても気付けない）。
+name: fatmax
+
+services:
+  hub:
+    build: .
+    image: fatmax-hub:local
+    restart: unless-stopped
+    ports:
+      # ポートを変えるなら左だけ（FATMAX_PORT=9000）。右の 8787 は変えない。
+      - "${FATMAX_PORT:-8787}:8787"
+    environment:
+      # 日の境目（日別の金額・検索の「今日」・1日ぶんのタイムライン）。
+      # 渡さないとコンテナは UTC になり、境目が朝 9時にずれる。
+      TZ: ${TZ:-Asia/Tokyo}
+      # **ほかのマシンから届く、このマシンの IP。** コンテナの中からは引けない。
+      #
+      # 使われるのは、localhost で開いたときに setup.sh へ焼く宛先と、起動時の案内だけ。
+      # LAN の IP で開けば Host ヘッダがそのまま使われるので、渡さなくても正しく出る。
+      # 渡さずに localhost から setup.sh を取ると、**コンテナの IP（172.x）が焼かれて届かない**。
+      #
+      # DHCP で IP が変わったら、渡し直して `docker compose up -d`。
+      # **en0 と決め打ちしない**（Wi-Fi が en1 の Mac がある。実際この Mac がそう）:
+      #   macOS:  FATMAX_LAN_IP=$(ipconfig getifaddr "$(route -n get default | awk '/interface:/{print $2}')")
+      #   Linux:  FATMAX_LAN_IP=$(ip route get 1.1.1.1 | awk '{for(i=1;i<NF;i++) if($i=="src") print $(i+1)}')
+      FATMAX_LAN_IP: ${FATMAX_LAN_IP:-}
+    volumes:
+      - data:/var/lib/fatmax
+    # ログは標準エラーだけ。Docker の既定は上限なしで溜まり続けるので切っておく。
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+
+volumes:
+  data:

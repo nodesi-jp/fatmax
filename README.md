@@ -128,11 +128,13 @@ fatmax が**気づかせます**。人間の無駄時間をゼロに近づける
 ## install
 
 **入れるのは集約する1台だけ**です。見たいマシンには何も置きません。
-いま配っているのは `0.1.140`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon です。
+いま配っているのは `0.1.144`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon です。
 
 - **[install](INSTALL.md)** — Ubuntu / Debian（apt）、Amazon Linux / Fedora / RHEL（dnf）、
   macOS。見たいマシンの繋ぎ方、
   ウォッチャー、確認、アンインストールまで
+- **[ハブを Docker で動かす](INSTALL-docker.md)** — ファイル2つを置いて `docker compose up` するだけ。
+  中身は apt と同じパッケージ
 - **[コンテナ1つで完結](INSTALL-container.md)** — Docker コンテナで Claude Code を動かしていて、
   そのコンテナだけ見る。**ハブを起動するだけ**
 - **[複数 EC2 × 複数コンテナ](INSTALL-ec2.md)** — 手元の WSL Ubuntu にハブ、
