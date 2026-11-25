@@ -13,6 +13,7 @@ Claude Code で:
 ```
 /plugin marketplace add nodesi-jp/fatmax
 /plugin install fatmax@fatmax
+/reload-plugins
 /fatmax:setup <ハブの画面の「導入」に出ている1行>
 ```
 

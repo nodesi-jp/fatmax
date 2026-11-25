@@ -128,16 +128,17 @@ fatmax が**気づかせます**。人間の無駄時間をゼロに近づける
 ## install
 
 **ハブ**（画面と記録を集める1台）を LAN に1台立て、**見たいマシン**それぞれにウォッチャーを置きます。
-いま配っているのは `0.1.182`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon、Windows は x86_64 です。
+いま配っているのは `0.1.183`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon、Windows は x86_64 です。
 
 ### 見たいマシンは、Claude Code のプラグインで入れられます（macOS / Linux / Windows 共通）
 
-ハブを立てたら、見たいマシンの **Claude Code で次の3行**を打ちます。hook と会話担当エージェントはプラグインが持ち、
+ハブを立てたら、見たいマシンの **Claude Code で次の4行**を打ちます。hook と会話担当エージェントはプラグインが持ち、
 `/fatmax:setup` がウォッチャー（実行ファイル）を置いて、ハブの宛先・指紋・トークンを保存し、ウォッチャーを起こします。
 
 ```
 /plugin marketplace add nodesi-jp/fatmax
 /plugin install fatmax@fatmax
+/reload-plugins
 /fatmax:setup <ハブの画面の「導入」に出ている1行>
 ```
 

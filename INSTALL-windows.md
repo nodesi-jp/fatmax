@@ -1,6 +1,6 @@
 # Windows で入れる（試験版）
 
-**Windows で動いている Claude Code を、LAN にあるハブへ繋ぐ**手順です。いま配っているのは `0.1.182` です。
+**Windows で動いている Claude Code を、LAN にあるハブへ繋ぐ**手順です。いま配っているのは `0.1.183` です。
 
 > **試験版です。** 入れる・入れ直す・外すは PowerShell 7 で確かめてあります。`install.cmd` が使う
 > Windows PowerShell 5.1 は文字コードの扱いが 7 と違うので、その違いには合わせてありますが、
@@ -30,11 +30,12 @@ Windows に入れるのは **見たいマシン**の役目だけです。**ハ�
 
 ## いちばん簡単: Claude Code のプラグインで入れる
 
-Windows の **Claude Code で**、次の3行を打ちます（PowerShell ではありません。Claude Code の入力欄です）。
+Windows の **Claude Code で**、次の4行を打ちます（PowerShell ではありません。Claude Code の入力欄です）。
 
 ```
 /plugin marketplace add nodesi-jp/fatmax
 /plugin install fatmax@fatmax
+/reload-plugins
 /fatmax:setup <ハブの画面の「導入」に出ている1行>
 ```
 
@@ -178,7 +179,8 @@ Select-String -Path "$HOME\.claude\settings.json.fleet-backup" -Pattern '"Length
 
 ## Windows ではできないこと
 
-- **画面からの返信と、トークルームへ「本体で参加」は使えません**（`--replies` が macOS / Linux だけのため）
+- **画面からの返信と、トークルームへ「本体で参加」は使えません**（Windows の受け口に、ウォッチャーがまだ書き込めないため。
+  macOS / Linux は既定で受けます）
 - トークルームの「エージェントで参加」は、install.cmd が置くエージェント定義（`%USERPROFILE%\.claude\agents\fatmax-room.md`）で
   入れます。**実機ではまだ確かめていません**（エージェントは curl でウォッチャーと話すので、Git Bash が要ります）
 
