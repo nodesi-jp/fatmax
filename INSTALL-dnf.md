@@ -1,6 +1,6 @@
 # dnf で入れる（Amazon Linux 2023 / Fedora / RHEL）
 
-Amazon Linux 2023・Fedora・RHEL 系に **dnf で入れる**手順です。いま配っているのは `0.1.169` です。
+Amazon Linux 2023・Fedora・RHEL 系に **dnf で入れる**手順です。いま配っているのは `0.1.172` です。
 CPU（x86_64 / aarch64）は dnf が選びます。rpm と索引（repomd.xml）の両方に署名があります。
 
 入れるものは1つ（`fatmax` パッケージ）で、**入れたマシンの役目は次のどちらか**です。

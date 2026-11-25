@@ -1,10 +1,15 @@
 # Windows で入れる（試験版）
 
-**Windows で動いている Claude Code を、LAN にあるハブへ繋ぐ**手順です。いま配っているのは `0.1.169` です。
+**Windows で動いている Claude Code を、LAN にあるハブへ繋ぐ**手順です。いま配っているのは `0.1.172` です。
 
 > **試験版です。** 入れる・入れ直す・外すは PowerShell 7 で確かめてあります。`install.cmd` が使う
 > Windows PowerShell 5.1 は文字コードの扱いが 7 と違うので、その違いには合わせてありますが、
 > 実機で最後まで通ったことはまだありません。うまく動かないときは、下の「うまくいかないとき」を見てください。
+
+> **0.1.172 より前に入れた人へ。hook が1件も届いていません。** 前の版は hook の1行を cmd.exe の書き方で
+> 入れていましたが、Windows の Claude Code は hook を Git Bash か PowerShell で動かすので、構文として通らず
+> 1件も届いていませんでした（transcript と OTel だけが届くので、**ハブの画面のセッション一覧にこのマシンが出ません**）。
+> 下の「1. 一式を落として入れる」をもう一度叩いてください。入れ直すと前の形は外れます。
 
 > **0.1.169 より前に入れた（入れ直した）人へ。** 前の版は、入れるときに `settings.json` の
 > **文字列の配列を壊していました**（`"allow": ["Bash(…)"]` が `{"Length": 17}` に、空の配列が `null` に
@@ -59,7 +64,9 @@ Expand-Archive fatmax-windows.zip . -Force
 1. `fatmax.exe` を `%USERPROFILE%\.fatmax\bin\` に置く（hook はここを見ます。場所は変えられません）
 2. ハブの宛先・指紋・トークンを保存する（`%USERPROFILE%\.fatmax\hub` と `known_hubs`）
 3. hook と OTel を入れる（ハブが配っている `setup.ps1` を `fatmax.exe fetch` で取る。ユーザ全体の `settings.json`）。
-   **取れなければ、ここで止まります**（届かない・指紋かトークンが違う）
+   **取れなければ、ここで止まります**（届かない・指紋かトークンが違う）。
+   hook の1行の形は、Claude Code が hook を動かすシェルに合わせます ——
+   **Git Bash があれば sh の形、無ければ PowerShell の形**（`hook は … の形で入れます` と出ます）
 4. ウォッチャーを裏で動かす（ログは `%USERPROFILE%\.fatmax\watch.log`）
 
 終わったら **Claude Code を開き直してください**（OTel の設定は起動時にしか読まれません）。
@@ -158,6 +165,13 @@ Select-String -Path "$HOME\.claude\settings.json.fleet-backup" -Pattern '"Length
   「エージェントで参加」も、このマシンでは試していません
 
 ## うまくいかないとき
+
+- **ハブの画面のセッション一覧にこのマシンが出ない（通知タブに「hook が1件も通っていません」）** ——
+  `settings.json` の hook が動いていません。`& "$HOME\.fatmax\bin\fatmax.exe" status` の hook の行を見てください。
+  「cmd.exe の形で入っています」なら 0.1.172 より前の一式なので、落とし直して入れ直してください。
+  形は合っているのに届かないなら、Claude Code の見立てと違うシェルの形が入っています。
+  Git for Windows を入れているなら `-Shell bash`、入れていないなら `-Shell powershell` を付けて入れ直してください
+  （`.\fatmax-windows\install.cmd -Shell bash`）
 
 - **「ハブから取れません」で止まる** —— ハブの IP・ポートと、ハブ側のファイアウォールを確かめてください。
   `Test-NetConnection <ハブの IP> -Port 8787` の `TcpTestSucceeded` が `True` なら届いています。
