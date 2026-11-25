@@ -128,7 +128,7 @@ fatmax が**気づかせます**。人間の無駄時間をゼロに近づける
 ## install
 
 **ハブ**（画面と記録を集める1台）を LAN に1台立て、**見たいマシン**それぞれにウォッチャーを置きます。
-いま配っているのは `0.1.175`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon、Windows は x86_64 です。
+いま配っているのは `0.1.176`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon、Windows は x86_64 です。
 
 **入れ方ごとの手順書**（どれも、入れる → 繋ぐ → 上げる → 外す までを1枚に）:
 
