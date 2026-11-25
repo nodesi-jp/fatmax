@@ -1,6 +1,6 @@
 # Windows で入れる（試験版）
 
-**Windows で動いている Claude Code を、LAN にあるハブへ繋ぐ**手順です。いま配っているのは `0.1.183` です。
+**Windows で動いている Claude Code を、LAN にあるハブへ繋ぐ**手順です。いま配っているのは `0.1.184` です。
 
 > **試験版です。** 入れる・入れ直す・外すは PowerShell 7 で確かめてあります。`install.cmd` が使う
 > Windows PowerShell 5.1 は文字コードの扱いが 7 と違うので、その違いには合わせてありますが、
@@ -39,9 +39,13 @@ Windows の **Claude Code で**、次の4行を打ちます（PowerShell では�
 /fatmax:setup <ハブの画面の「導入」に出ている1行>
 ```
 
-- `/fatmax:setup` が、この下の「1. 一式を落として入れる」と同じことを Claude に流させます（実行ファイルを置く・宛先と指紋とトークンを
-  保存する・ウォッチャーを窓で起こす）。hook と会話担当エージェント（fatmax-room など）はプラグインが持つので、settings.json には書きません
-- **Git for Windows（Git Bash）が要ります。** Claude Code は Windows でも hook を bash で動かします（プラグインの hook も同じ）
+- `/fatmax:setup` は、**ウォッチャーを WSL（Linux）の中に入れて、窓で起こします**。Windows の fatmax.exe は使いません ——
+  署名の無い .exe は、Windows 11 のスマート アプリ コントロールに止められることがあるためです（版を上げるたびに「初めて見る .exe」になる）。
+  hook と会話担当エージェント（fatmax-room など）はプラグインが持つので、settings.json には書きません（OTel の設定だけ入ります）
+- **Git for Windows（Git Bash）と WSL（Ubuntu など）が要ります。** hook は Git Bash で動き、`127.0.0.1:8788` に送ります。
+  WSL が localhost で受けている口は Windows からもそのまま届くので、WSL のウォッチャーが受けます。
+  WSL が無ければ、管理者の PowerShell で `wsl --install -d Ubuntu`（再起動が要ります）
+- 前に Windows の fatmax.exe で入れていた場合、`/fatmax:setup` がそのウォッチャーを止めて fatmax.exe を外します（8788 の取り合いを避けるため）
 - 前に「1.」の手順で入れていた場合も、そのまま `/fatmax:setup` で大丈夫です（settings.json の古い hook は外します。2組並ぶと2回届くため）
 - 入れたら **Claude Code を開き直し**、1回やりとりしてから「2. 確かめる」の `fatmax status` で「通った数 hook」が 1 以上か見てください
 

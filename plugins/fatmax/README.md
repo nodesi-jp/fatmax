@@ -17,5 +17,6 @@ Claude Code で:
 /fatmax:setup <ハブの画面の「導入」に出ている1行>
 ```
 
-Windows は Git for Windows（Git Bash）が要ります（Claude Code が hook を bash で動かすため）。
+Windows は **Git for Windows（Git Bash）と WSL（Ubuntu など）** が要ります。hook は Git Bash で動き、
+ウォッチャーは WSL の中で Linux 版を動かします（署名の無い fatmax.exe は Windows のスマート アプリ コントロールに止められるため）。
 詳しくは https://nodesi-jp.github.io/fatmax/ を見てください。
