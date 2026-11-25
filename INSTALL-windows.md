@@ -67,7 +67,7 @@ Expand-Archive fatmax-windows.zip . -Force
    **取れなければ、ここで止まります**（届かない・指紋かトークンが違う）。
    hook の1行の形は、Claude Code が hook を動かすシェルに合わせます ——
    **Git Bash があれば sh の形、無ければ PowerShell の形**（`hook は … の形で入れます` と出ます）
-4. ウォッチャーを裏で動かす（ログは `%USERPROFILE%\.fatmax\watch.log`）
+4. ウォッチャーを**別の窓で**動かす（版・宛先・ハブへ届くかがその窓に出ます。**窓を閉じると止まります**）
 
 終わったら **Claude Code を開き直してください**（OTel の設定は起動時にしか読まれません）。
 
@@ -98,10 +98,10 @@ Claude Code を1回動かしてからハブの画面（`https://<ハブの IP>:8
 **ウォッチャーを動かさないと、記録はハブへ上がりません。** 消えはしません ——
 `%USERPROFILE%\.fatmax\spool` に溜まっていて、動かせばまとめて流れます。
 
-**サインアウト・再起動で止まります**（自分では立ち上がりません）。止まったら:
+**窓を閉じると止まります。サインアウト・再起動でも止まります**（自分では立ち上がりません）。止まったら:
 
 ```powershell
-Start-Process "$HOME\.fatmax\bin\fatmax.exe" -ArgumentList watch -WindowStyle Hidden
+Start-Process "$HOME\.fatmax\bin\fatmax.exe" -ArgumentList watch
 ```
 
 サインインのたびに動かしたいなら、この1行をタスク スケジューラに登録してください（fatmax は自分では登録しません）。
