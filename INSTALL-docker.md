@@ -2,7 +2,7 @@
 
 **ハブ（画面と記録を集める1台）を Docker のコンテナで動かす**手順です。
 中身は [apt で入れる](INSTALL.md) のと同じ `fatmax` パッケージで、Debian のコンテナに入れて動かすだけです。
-systemd の無いマシンや、ホストに直接入れたくないときに使います。いま配っているのは `0.1.156` です。
+systemd の無いマシンや、ホストに直接入れたくないときに使います。いま配っているのは `0.1.158` です。
 
 - コンテナの中で Claude Code を動かしていて、そのコンテナだけ見たい → **[コンテナ1つで完結](INSTALL-container.md)**
 - Docker を使わない入れ方 → **[install](INSTALL.md)**
@@ -47,7 +47,7 @@ Linux で `docker` に `sudo` が要るなら、`sudo docker compose …` でそ
 こう出れば動いています。初回は 20 秒ほどかかります。
 
 ```
-fatmax hub  版 0.1.156 (…)
+fatmax hub  版 0.1.158 (…)
 fatmax hub listening on http://0.0.0.0:8787/
   LAN:   http://192.168.0.21:8787/  (FATMAX_LAN_IP)
   setup: curl -fsSL http://192.168.0.21:8787/setup.sh | sh
