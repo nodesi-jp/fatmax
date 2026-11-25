@@ -4,7 +4,7 @@ Claude Code を **Docker コンテナ1つ**で動かしていて、そのコン�
 **ハブを起動するだけ**で、ウォッチャー（ウォッチャー）も手元の準備も要りません。
 
 **CPU は amd64（x86_64）**、コンテナは **dnf 系**（Amazon Linux / Fedora / RHEL）を前提に
-書いてあります。いま配っているのは `0.1.160` です。
+書いてあります。いま配っているのは `0.1.163` です。
 やめ方は [アンインストール](#アンインストール) にあります。
 
 - 複数の EC2 に散らばったコンテナを1画面に集めたい → **[複数 EC2 × 複数コンテナ](INSTALL-ec2.md)**
@@ -24,10 +24,12 @@ Claude Code もそのコンテナの中で動いている状態から始めま�
 flowchart LR
   subgraph C["コンテナ (amd64 / dnf)"]
     CC["Claude Code"]
+    W["fatmax watch<br/>:8788"]
     H["fatmax hub<br/>:8787"]
     T[("~/.claude/projects")]
     DB[("ワークスペースの .fatmax/<br/>fatmax（実行ファイル）+ fatmax.db")]
-    CC -->|"hook 127.0.0.1:8787"| H
+    CC -->|"hook 127.0.0.1:8788"| W
+    W -->|"TLS・トークン"| H
     H -.->|読む| T
     H --> DB
   end
@@ -104,11 +106,20 @@ nohup fatmax hub --db "$PWD/.fatmax/fatmax.db" > /tmp/fatmax-hub.log 2>&1 &
 
 ## 4. hook を入れる
 
-**Claude Code を開いているディレクトリで**実行します。
+**Claude Code を開いているディレクトリで**実行します。指紋とトークンは `fatmax token` が出します
+（`導入:` の行がそのまま叩ける1行です。下はその形）。
 
 ```sh
-curl -fsSL http://127.0.0.1:8787/setup.sh | sh
+fatmax token --db "$PWD/.fatmax/fatmax.db"
+curl -fsSL -k --pinnedpubkey '<指紋>' 'https://127.0.0.1:8787/setup.sh?t=<トークン>' | sh -s -- --hub https://127.0.0.1:8787
 ```
+
+**`--hub https://127.0.0.1:8787` を付けるのは、ハブが同じコンテナにいるから**です。付けないと、
+setup.sh はハブから見た LAN 側の IP（コンテナの IP）を宛先にし、コンテナを作り直して IP が
+変わった日に届かなくなります（指紋で照合するので繋がりはしますが、宛先そのものが無くなる）。
+
+`-k` は「証明書の発行元を問わない」、`--pinnedpubkey` は「でも鍵が指紋と違えば切る」です。
+2つ揃って、このハブにだけ繋がります（通信は TLS で暗号化され、ハブへの接続はトークンで認証されます）。
 
 `~/.claude/settings.json` に hook と OTel の設定が入るだけで、置くファイルはありません（ステータス行は既定で入れません。出したいなら `--statusline`）。
 **このあと Claude Code を再起動してください。**
@@ -125,8 +136,8 @@ nohup .fatmax/fatmax watch > /tmp/fatmax-watch.log 2>&1 &
 ```
 
 **画面から返信もしたいなら `--replies` を付けます**（`… watch --replies …`）。ハブのトークで、
-応答が終わったセッションの下に入力欄が出ます。ハブには認証が無いので、付けると
-**ハブに届く人なら誰でもこのコンテナの Claude に依頼を送れます**。既定では付けません。
+応答が終わったセッションの下に入力欄が出ます。付けると
+**ハブの画面を開ける人（トークンを持つ人）なら誰でもこのコンテナの Claude に依頼を送れます**。既定では付けません。
 
 動かすまで、記録は `~/.fatmax/spool` に溜まるだけでハブへは上がりません。**消えはしません**
 —— 動かせば溜まっていたぶんがまとめて流れます。
@@ -139,7 +150,12 @@ nohup .fatmax/fatmax watch > /tmp/fatmax-watch.log 2>&1 &
 **VS Code の PORTS タブ**（ターミナルの隣）に `8787` が出ています。
 3. でハブが待ち受けを始めた時点で、Dev Containers が**自動で転送**します。
 
-その行の**🌐 をクリックするだけ**です。手元のブラウザで `http://localhost:8787/` が開きます。
+その行の**🌐 をクリックするだけ**です。手元のブラウザで `https://localhost:8787/` が開きます
+（http で開いても https へ送られます）。
+
+- **最初の1回はトークンが要ります。** `https://localhost:8787/login?token=<トークン>` で開くか、
+  出てきた画面にトークンを貼ります（あとはブラウザが覚えます）
+- 証明書はハブが自分で作ったものなので、**ブラウザは最初に一度警告を出します**
 
 - 出ていなければ「ポートの転送」で `8787` を足します
 - 毎回確実に出したいなら `devcontainer.json` に `"forwardPorts": [8787]`
@@ -155,7 +171,7 @@ fatmax status
 こう出れば成立です。
 
 ```
-✓ ハブ        動いています  http://127.0.0.1:8787
+✓ ハブ        動いています  https://127.0.0.1:8787
 ⚠ ウォッチャー        動いていません（記録はディスクに溜まり、ハブへ上がりません）
 ✓ hook        入っています（ユーザ全体）
 ✓ transcript  読めています（実行中に差し込んだ指示も出ます）
@@ -203,7 +219,7 @@ fatmax status
 | 作り直したら過去のコストも会話も消えた | `--db` を付けずに起動しています。`fatmax status` の `記録` が `~/.fatmax/…` ならそれです |
 | `fatmax: command not found` | symlink はコンテナの中なので Rebuild で消えます。1. の `ln -sf` だけ張り直す |
 | 版が古いまま | `.fatmax/fatmax` は**残る**ので上がりません。1. の最後で消して取り直す |
-| 接続が止まらない・ポートが枯れる | ハブとウォッチャーの版がズレていると1秒ごとに繋ぎ直します。両方を 0.1.160 以上へ。手順は [INSTALL-ec2.md](INSTALL-ec2.md) の「接続が止まらない・ポートが枯れる（調べ方）」 |
+| 接続が止まらない・ポートが枯れる | ハブとウォッチャーの版がズレていると1秒ごとに繋ぎ直します。両方を 0.1.163 以上へ。手順は [INSTALL-ec2.md](INSTALL-ec2.md) の「接続が止まらない・ポートが枯れる（調べ方）」 |
 
 ---
 
@@ -213,7 +229,7 @@ fatmax status
 置いてあるためです。外すときは:
 
 ```sh
-curl -fsSL http://127.0.0.1:8787/setup.sh | sh -s -- --uninstall
+curl -fsSL -k --pinnedpubkey '<指紋>' 'https://127.0.0.1:8787/setup.sh?t=<トークン>' | sh -s -- --uninstall
 pkill -f 'fatmax hub' || true
 rm -f /usr/local/bin/fatmax ~/.claude/fatmax-host
 rm -f .fatmax/fatmax                                   # 記録（fatmax.db）は残ります

@@ -1,6 +1,6 @@
 # dnf で入れる（Amazon Linux 2023 / Fedora / RHEL）
 
-Amazon Linux 2023・Fedora・RHEL 系に **dnf で入れる**手順です。いま配っているのは `0.1.160` です。
+Amazon Linux 2023・Fedora・RHEL 系に **dnf で入れる**手順です。いま配っているのは `0.1.163` です。
 CPU（x86_64 / aarch64）は dnf が選びます。rpm と索引（repomd.xml）の両方に署名があります。
 
 入れるものは1つ（`fatmax` パッケージ）で、**入れたマシンの役目は次のどちらか**です。
@@ -30,9 +30,19 @@ fatmax --version
 sudo systemctl enable --now fatmax-hub
 ```
 
-`http://<このマシンの IP>:8787/` が開けば動いています。記録は `/var/lib/fatmax/fatmax.db` です。
+`https://<このマシンの IP>:8787/` が開けば動いています。記録は `/var/lib/fatmax/fatmax.db` です。
 
-- **認証はありません。** LAN の外に出さないでください。EC2 ならセキュリティグループで 8787 を自分の範囲だけに
+**最初の1回はトークンが要ります。** トークン・指紋・導入の1行はこれで出ます:
+
+```sh
+sudo -u fatmax fatmax token --db /var/lib/fatmax/fatmax.db
+```
+
+出てきた `画面:` の URL で開けばそのままログインできます（あとはブラウザが覚えます）。
+証明書はハブが自分で作ったものなので、ブラウザは最初に一度警告を出します
+（消したいなら `https://<IP>:8787/ca.pem` を OS に信頼させる）。
+
+- 通信は TLS で暗号化され、接続はトークンで認証されます。それでも**インターネットへ直接は晒さないでください**。EC2 ならセキュリティグループで 8787 を自分の範囲だけに
 - **ハブは LAN に1台だけ**にします。見たいだけのマシンでこの1行を叩くと、ハブがもう1つ立ちます
 - firewalld が動いているなら `sudo firewall-cmd --add-port=8787/tcp --permanent && sudo firewall-cmd --reload`
 - ハブが配るウォッチャーの実行ファイルは、**このマシンと同じ CPU のぶんだけ**です。
@@ -44,10 +54,11 @@ sudo systemctl enable --now fatmax-hub
 
 ```sh
 # ハブに届くか
-curl -fsS -m 5 -o /dev/null http://<ハブの IP>:8787/healthz && echo 届く
+curl -fsSk -m 5 -o /dev/null https://<ハブの IP>:8787/healthz && echo 届く
 
-# hook・OTel・宛先を入れる（パッケージの fatmax をそのまま使う）
-curl -fsSL http://<ハブの IP>:8787/setup.sh | sh
+# hook・OTel・宛先・指紋・トークンを入れる（パッケージの fatmax をそのまま使う）
+# この1行はハブの画面の「導入」に出ています（ハブのマシンでは fatmax token でも出る）
+curl -fsSL -k --pinnedpubkey '<指紋>' 'https://<ハブの IP>:8787/setup.sh?t=<トークン>' | sh
 
 # ウォッチャーを動かす
 nohup fatmax watch > /tmp/fatmax-watch.log 2>&1 &
@@ -56,13 +67,16 @@ fatmax status
 
 終わったら **Claude Code を開き直してください**（OTel の設定は起動時にしか読まれません）。
 
+`-k` は「証明書の発行元を問わない」、`--pinnedpubkey` は「でも鍵が指紋と違えば切る」です。
+2つ揃って、このハブにだけ繋がります（名前ではなく鍵で照合するので、IP が動いても繋がる）。
+
 - **ウォッチャーを動かさないと、記録はハブへ上がりません。** 消えはしません ——
   `~/.fatmax/spool` に溜まっていて、動かせばまとめて流れます
 - **ウォッチャーはログアウト・再起動で止まります**（自分では立ち上がりません）。
   止まったら `nohup` の行を叩き直してください
 - 画面に出る名前を決めるなら `echo '開発機' > ~/.claude/fatmax-host`（送るたびに読み直すので、再起動は要りません）
 - 画面から返信したい・トークルームに本体で入れたいなら、`fatmax watch --replies` で動かします。
-  **受けると、LAN の誰でもこのマシンの Claude に依頼を送れます**（ハブに認証が無いため）。
+  **受けると、ハブの画面を開ける人（トークンを持つ人）なら誰でもこのマシンの Claude に依頼を送れます**。
   詳しくは [画面から返信する](INSTALL.md#画面から返信する任意)
 - EC2 のコンテナから手元のハブへ SSH で繋ぐ構成は [複数 EC2 × 複数コンテナ](INSTALL-ec2.md)
 
@@ -75,7 +89,7 @@ curl -fsSL https://nodesi-jp.github.io/fatmax/dnf/fatmax.repo -o /etc/yum.repos.
 dnf install -y fatmax
 
 mkdir -p ~/.claude && echo 'dev-linux' > ~/.claude/fatmax-host
-curl -fsSL http://<ハブの IP>:8787/setup.sh | sh
+curl -fsSL -k --pinnedpubkey '<指紋>' 'https://<ハブの IP>:8787/setup.sh?t=<トークン>' | sh
 nohup fatmax watch > /tmp/fatmax-watch.log 2>&1 &
 ```
 
@@ -106,7 +120,7 @@ fatmax status
 見たいマシン（Claude Code を開いているフォルダで）:
 
 ```sh
-curl -fsSL http://<ハブの IP>:8787/setup.sh | sh -s -- --uninstall
+curl -fsSL -k --pinnedpubkey '<指紋>' 'https://<ハブの IP>:8787/setup.sh?t=<トークン>' | sh -s -- --uninstall
 pkill -f 'fatmax watch'
 ```
 

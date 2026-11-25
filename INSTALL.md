@@ -1,7 +1,7 @@
 # install — fatmax の入れ方
 
 **パッケージを入れるのは集約する1台（ハブ）だけ**で足ります。見たいマシンには `setup.sh` が hook とウォッチャーを置きます（→ [見たいマシンを繋ぐ](#見たいマシンを繋ぐ)）。
-いま配っているのは `0.1.160` です。外し方は [アンインストール](#アンインストールuninstall) にあります。
+いま配っているのは `0.1.163` です。外し方は [アンインストール](#アンインストールuninstall) にあります。
 
 **入れ方ごとの短い手順書もあります** —— **[apt](INSTALL-apt.md)** ／ **[dnf](INSTALL-dnf.md)** ／
 **[Windows](INSTALL-windows.md)**（試験版） ／ **[Docker](INSTALL-docker.md)**。このページはその全部の詳しい説明です。
@@ -25,9 +25,29 @@ sudo systemctl enable --now fatmax-hub
 ```
 
 CPU（amd64 / arm64）は apt が選びます。署名済みです。
-**入れただけでは動きません。**最後の1行で上げます。`http://<このマシンの IP>:8787/` が開きます。
+**入れただけでは動きません。**最後の1行で上げます。`https://<このマシンの IP>:8787/` が開きます
+（最初の1回はトークンが要ります → [画面を開く](#画面を開くトークン)）。
 
-> **上げるのは1台だけ**です。認証が無いので、入れた全台で上げると待ち受けがそのぶん増えます。
+> **上げるのは1台だけ**です。入れた全台で上げると、待ち受けもハブもそのぶん増えます。
+
+### 画面を開く（トークン）
+
+通信は TLS で暗号化され、ハブへの接続はトークンで認証されます（既定。何も設定は要りません）。
+トークン・指紋・導入の1行は、ハブのマシンでこれで出ます:
+
+```sh
+sudo -u fatmax fatmax token --db /var/lib/fatmax/fatmax.db   # apt / dnf で system に入れたハブ
+fatmax token                                                 # 自分のユーザで動かしているハブ
+```
+
+出てきた `画面:` の URL（`/login?token=…`）で開けば、そのままログインできます。あとはブラウザが覚えます
+（起動ログにも同じ URL が出ています）。証明書はハブが自分で作ったものなので、**ブラウザは最初に一度警告を出します**。
+消したいなら `https://<IP>:8787/ca.pem` を OS に信頼させるか、`fatmax hub --cert <PEM> --key <PEM>` で自分の証明書を使います。
+それでも**インターネットへ直接は晒さないでください**（LAN の中だけ。外から使うなら VPN の内側に）。
+
+> **前の版から上げたとき。** 各マシンで[導入の1行](#見たいマシンを繋ぐ)を叩き直してください
+> （fatmax が古ければ先に上げる。古いと `setup.sh` が警告します）。叩き直すまでそのマシンの記録は
+> ハブへ上がりませんが、**消えずにそのマシンに溜まり**、入れ直すと流れます。
 
 <details>
 <summary>root のコンテナ（sudo も systemd も無い場合）</summary>
@@ -112,10 +132,11 @@ fatmax --version
 
 ## 次に —— 見たいマシンを繋ぐ
 
-ハブが上がったら、**見たいマシンそれぞれで1回だけ**叩きます。ハブの IP を入れてください。
+ハブが上がったら、**見たいマシンそれぞれで1回だけ**叩きます。1行はハブの画面の「導入」に出ています
+（起動ログの `setup:` の行、ハブのマシンの `fatmax token` にも同じものが出ます）。
 
 ```sh
-curl -fsSL http://192.168.0.19:8787/setup.sh | sh
+curl -fsSL -k --pinnedpubkey 'sha256//…' 'https://192.168.0.19:8787/setup.sh?t=<トークン>' | sh
 ```
 
 `settings.json` に hook と OTel の設定が入り、パッケージの無いマシンにはウォッチャーの実行ファイルが置かれます
@@ -126,11 +147,16 @@ curl -fsSL http://192.168.0.19:8787/setup.sh | sh
 
 ## 見たいマシンを繋ぐ
 
-そのマシンで1回だけ:
+そのマシンで1回だけ（ハブの画面の「導入」に出ている1行）:
 
 ```sh
-curl -fsSL http://<ハブの IP>:8787/setup.sh | sh
+curl -fsSL -k --pinnedpubkey '<指紋>' 'https://<ハブの IP>:8787/setup.sh?t=<トークン>' | sh
 ```
+
+`-k` は「証明書の発行元を問わない」、`--pinnedpubkey` は「でも鍵が指紋と違えば切る」です。
+2つ揃って、このハブにだけ繋がります。**名前（IP）ではなく鍵で照合する**ので、IP が動いても繋がり、
+偽のハブには繋がりません。トークンは指紋と一緒に `~/.fatmax/known_hubs` に控えられ、
+ウォッチャーだけが使います（`settings.json` には入りません）。
 
 `~/.claude/settings.json` に hook が入ります（`--uninstall` で抜けます）。
 そのユーザーの**全プロジェクト**で効きます。**このあと Claude Code を再起動してください。**
@@ -142,8 +168,8 @@ curl -fsSL http://<ハブの IP>:8787/setup.sh | sh
 >
 > | | 何をするか | いつ |
 > |---|---|---|
-> | `curl …/setup.sh \| sh` | 繋ぐ一式（hook ＋ 実行ファイル ＋ 宛先） | 初回 |
-> | `fatmax setup` | **宛先だけ**決め直す（`~/.fatmax/hub`） | ハブが引っ越したとき |
+> | `curl …/setup.sh?t=… \| sh` | 繋ぐ一式（hook ＋ 実行ファイル ＋ 宛先 ＋ 指紋とトークン） | 初回 |
+> | `fatmax setup` | **宛先だけ**決め直す（`~/.fatmax/hub`）。指紋とトークンも渡せる | ハブが引っ越したとき |
 >
 > 以前は宛先が hook の1行に焼かれていたので、引っ越すたびに `setup.sh` の入れ直しが
 > 要りました。いまは `fatmax setup` だけで済みます。
@@ -164,9 +190,9 @@ fatmax --version
 # 2. 名前を付ける（好きな名前でよい。画面のマシン名になる）
 echo 'dev-linux' > ~/.claude/fatmax-host
 
-# 3. ハブに届くか確かめてから、宛先と hook を入れる
-curl -fsS -m 5 -o /dev/null http://<ハブの IP>:8787/healthz && echo 届く
-curl -fsSL http://<ハブの IP>:8787/setup.sh | sh
+# 3. ハブに届くか確かめてから、宛先と hook を入れる（2行目はハブの画面の「導入」の1行）
+curl -fsSk -m 5 -o /dev/null https://<ハブの IP>:8787/healthz && echo 届く
+curl -fsSL -k --pinnedpubkey '<指紋>' 'https://<ハブの IP>:8787/setup.sh?t=<トークン>' | sh
 
 # 4. ウォッチャーを動かす（画面から返信も受けるなら --replies。下の「画面から返信する」）
 nohup fatmax watch > /tmp/fatmax-watch.log 2>&1 &
@@ -196,16 +222,19 @@ fatmax setup
 選択肢が出ます。
 
 ```
-  1) http://127.0.0.1:8787              このマシンでハブが動いている
-  2) http://host.docker.internal:8787   コンテナの中から、ホスト側のハブへ
+  1) https://127.0.0.1:8787              このマシンでハブが動いている
+  2) https://host.docker.internal:8787   コンテナの中から、ホスト側のハブへ
   3) 自分で入力する
 ```
 
-聞かれたくないときは `fatmax setup --hub http://<ハブの IP>:8787`、
-いま何が入っているかは `fatmax setup --show` です。
+続けて、指紋とトークンを聞かれます（ハブの画面の「導入」に出ています）。
+聞かれたくないときは `fatmax setup --hub https://<ハブの IP>:8787 --pin '<指紋>' --token '<トークン>'`、
+いま何が入っているかは `fatmax setup --show` です（トークンは出しません）。
 
 保存先は **`~/.fatmax/hub` の1行**だけ。**毎回読み直す**ので、ハブが引っ越したら
 この1行を書き換えるだけで済みます（入れ直しも、ウォッチャーの動かし直しも要りません）。
+指紋とトークンは `~/.fatmax/known_hubs` に**指紋で引ける形**で控えてあるので、同じハブなら
+宛先を書き換えても照合はそのまま通ります。
 **0.1.150 までのウォッチャーは起動したときに1回しか読みません。** 書き換えたら一度動かし直してください
 （動かし直さないと、前のハブへ送り続けます）。
 
@@ -248,8 +277,8 @@ nohup fatmax watch --replies > /tmp/fatmax-watch.log 2>&1 &
 そこから返信できるようになります。Claude には「別のセッションからの伝言」として届きます
 （**許可の代わりにはなりません**。許可待ち・質問への回答待ちの間は入力欄が出ません）。
 
-- **既定では受けません。** ハブには認証が無いので、受けると **LAN の誰でもこのマシンの
-  Claude に依頼を送れます**。信頼できる LAN でだけ付けてください
+- **既定では受けません。** 受けると、**ハブの画面を開ける人（トークンを持つ人）なら誰でもこのマシンの
+  Claude に依頼を送れます**。トークンを渡した相手を信頼できるときだけ付けてください
 - **macOS / Linux だけ**です（Windows は未対応）
 - Claude Code の受け口（セッション間メッセージ）を使います。受け口を持たない版・設定では
   入力欄が出ません
@@ -261,7 +290,7 @@ nohup fatmax watch --replies > /tmp/fatmax-watch.log 2>&1 &
 ```sh
 curl -fsSL https://nodesi-jp.github.io/fatmax/bin/fatmax-linux-x86_64 -o ~/.fatmax/bin/fatmax   # arm64 は …-aarch64
 chmod +x ~/.fatmax/bin/fatmax
-~/.fatmax/bin/fatmax setup --hub http://<ハブの IP>:8787
+~/.fatmax/bin/fatmax setup --hub https://<ハブの IP>:8787 --pin '<指紋>' --token '<トークン>'
 ```
 
 CPU は `uname -m` で分かります（`x86_64` / `aarch64`）。
@@ -331,12 +360,12 @@ fatmax status
 再起動を忘れると `fatmax status` がこう言います。**出なければ入れ替わっています。**
 
 ```
-⚠ 動いているのは 0.1.17 (…)。手元の実行ファイルは 0.1.160 (…)（再起動していません）
+⚠ 動いているのは 0.1.17 (…)。手元の実行ファイルは 0.1.163 (…)（再起動していません）
 ```
 
 `systemctl status fatmax-hub` に版は出ません（`Description` は固定の文字列です）。
 再起動した直後なら起動ログの1行目に出るので、その下の journal に見えます。
-確実に見るなら `fatmax status` か `curl -s localhost:8787/healthz` です。
+確実に見るなら `fatmax status` か `curl -sk https://localhost:8787/healthz` です。
 
 設定（`/etc/fatmax/hub.conf`・`/etc/fatmax/relay.conf`）と記録（`/var/lib/fatmax/fatmax.db`）は
 **更新で上書きされません**。
@@ -359,10 +388,10 @@ ss -tanp 'dport = :8787' | awk '{print $1, $6}' | sort | uniq -c | sort -rn | he
 pkill -f 'fatmax watch'      # 止めて静かになるならウォッチャー側
 
 fatmax --version                          # ウォッチャー側
-curl -s http://127.0.0.1:8787/healthz     # ハブ側
+curl -sk https://127.0.0.1:8787/healthz   # ハブ側
 ```
 
-0.1.160 以降は、①古い名前でも訊き直す ②空振りしたら間隔を倍にする（1秒 → 最大60秒）
+0.1.163 以降は、①古い名前でも訊き直す ②空振りしたら間隔を倍にする（1秒 → 最大60秒）
 の2つが入っているので、版がズレてもこの輪には入りません。**それでも両側を揃えてください。**
 
 ## アンインストール（uninstall）
@@ -370,7 +399,7 @@ curl -s http://127.0.0.1:8787/healthz     # ハブ側
 **見たいマシン**（繋いだだけのマシン）:
 
 ```sh
-curl -fsSL http://<ハブの IP>:8787/setup.sh | sh -s -- --uninstall
+curl -fsSL -k --pinnedpubkey '<指紋>' 'https://<ハブの IP>:8787/setup.sh?t=<トークン>' | sh -s -- --uninstall
 ```
 
 `settings.json` から fatmax の hook と statusLine だけを外します。あなた自身の設定は残ります。

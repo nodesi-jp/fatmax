@@ -4,7 +4,7 @@
 1画面に集める手順です。各コンテナには**ウォッチャー**を入れます。
 
 **CPU は amd64（x86_64）**、コンテナは **dnf 系**（Amazon Linux / Fedora / RHEL）を前提に
-書いてあります。いま配っているのは `0.1.160` です。
+書いてあります。いま配っているのは `0.1.163` です。
 やめ方は [アンインストール](#アンインストール) にあります。
 
 - コンテナ1つで完結させたい（ハブだけ起動） → **[コンテナ1つで完結](INSTALL-container.md)**
@@ -124,8 +124,18 @@ nohup fatmax hub > /tmp/fatmax-hub.log 2>&1 &
 > **記録の置き場が変わります。** systemd（専用ユーザー）なら `/var/lib/fatmax/fatmax.db`、
 > 自分で動かしたなら `~/.fatmax/fatmax.db` です。**あとで消すときに効いてきます。**
 
-画面は Windows のブラウザから **`http://localhost:8787/`** です。WSL2 が Windows の
+画面は Windows のブラウザから **`https://localhost:8787/`** です。WSL2 が Windows の
 localhost を WSL 側の待ち受けへ転送するので、IP を調べる必要はありません。
+
+**最初の1回はトークンが要ります。** トークン・指紋・導入の1行は WSL 側でこれで出ます（5. でも使います）:
+
+```sh
+sudo -u fatmax fatmax token --db /var/lib/fatmax/fatmax.db   # systemd で動かしているとき
+fatmax token                                                 # nohup で自分で動かしているとき
+```
+
+`https://localhost:8787/login?token=<トークン>` で開けばそのままログインできます。
+証明書はハブが自分で作ったものなので、ブラウザは最初に一度警告を出します。
 **ここが開けることを確かめてから 2. へ進んでください**（2. がこの経路に乗ります）。
 
 ## 2. 各 EC2 へ、8787 を持ち込む
@@ -190,8 +200,9 @@ sudo systemctl reload sshd
 **ホストの外に出ていないアドレス**なので、セキュリティグループの設定に関係なく外からは届きません。
 
 > **`GatewayPorts yes` にするなら**、`0.0.0.0:8787` が開くことを忘れないでください。
-> **fatmax に認証はありません。** EC2 のセキュリティグループが 8787 を通していると、
-> **インターネットの誰でも会話の本文を読めます。**
+> 通信は TLS で暗号化され、接続はトークンで認証されますが、**インターネットへ直接は晒さないでください**
+> （試験・監査を受けた作りではありません）。EC2 のセキュリティグループが 8787 を通していると、
+> **インターネットの誰でもハブに届きます。**
 >
 > ```sh
 > ss -tlnp | grep 8787      # 0.0.0.0:8787 なら外向きにも開いています
@@ -209,7 +220,7 @@ ssh -N ec2-a          # 切れっぱなしが困るなら autossh
 
 ```sh
 ss -tlnp | grep 8787                        # 172.17.0.1:8787 で待っている
-curl -s http://172.17.0.1:8787/healthz      # ハブが返す
+curl -sk https://172.17.0.1:8787/healthz    # ハブが返す（版と指紋だけ。"authed":false は正常）
 ```
 
 ## 3. コンテナからハブが見えるようにする
@@ -235,7 +246,7 @@ services:
 
 ```sh
 getent hosts host.docker.internal          # アドレスが1行出れば OK
-curl -s http://host.docker.internal:8787/healthz
+curl -sk https://host.docker.internal:8787/healthz
 ```
 
 ## 4. 画面に出る名前を決める
@@ -267,21 +278,25 @@ echo 'ec2-b/batch' > ~/.claude/fatmax-host     # いつでも
 
 ```sh
 # 5-1. ハブが見えるか、先に確かめる（3. の --add-host が効いているか）
-curl -s http://host.docker.internal:8787/healthz
+curl -sk https://host.docker.internal:8787/healthz
 
 # 5-2. 入れる
 curl -fsSL https://nodesi-jp.github.io/fatmax/dnf/fatmax.repo -o /etc/yum.repos.d/fatmax.repo
 dnf install -y fatmax
 
-# 5-3. 繋ぐ（hook を入れ、**ハブの宛先を保存する**）
-curl -fsSL http://host.docker.internal:8787/setup.sh | sh
+# 5-3. 繋ぐ（hook を入れ、**ハブの宛先・指紋・トークンを保存する**）
+curl -fsSL -k --pinnedpubkey '<指紋>' 'https://host.docker.internal:8787/setup.sh?t=<トークン>' | sh
 ```
+
+指紋とトークンは 1. の `fatmax token` が出したもの（ハブの画面の「導入」にも出ています）。
+`-k` は「証明書の発行元を問わない」、`--pinnedpubkey` は「でも鍵が指紋と違えば切る」です。
+名前ではなく鍵で照合するので、`host.docker.internal` 越し・SSH トンネル越しでも、同じハブなら繋がります。
 
 5-3 でこう出れば通っています。
 
 ```
 インストールしました: /root/.claude/settings.json
-ハブの宛先を保存しました: http://host.docker.internal:8787  (/root/.fatmax/hub)
+ハブの宛先を保存しました: https://host.docker.internal:8787  (/root/.fatmax/hub)
 ウォッチャー: /usr/bin/fatmax を使います (パッケージで入っているので触りません)
 ```
 
@@ -289,7 +304,7 @@ curl -fsSL http://host.docker.internal:8787/setup.sh | sh
 
 > **順番が大事です。** `dnf install` はハブの宛先を知りません（知っているのは
 > `setup.sh` だけ ―― 取りに行った URL がそれです）。**先にウォッチャーを動かすと、
-> 既定の `http://127.0.0.1:8787`＝自分自身に送ろうとして、何も届きません。**
+> 既定の `https://127.0.0.1:8787`＝自分自身に送ろうとして、何も届きません。**
 
 `dnf` の無いコンテナなら、実行ファイルを直に置いてから 5-3 をやります。
 
@@ -307,7 +322,7 @@ nohup fatmax watch > /tmp/fatmax-watch.log 2>&1 &            # --hub は要り�
 ```
 
 **画面から返信もしたいなら `--replies` を付けます**（ハブのトークで、応答が終わったセッションの下に
-入力欄が出る）。ハブには認証が無いので、付けると**ハブに届く人なら誰でもこのコンテナの Claude に
+入力欄が出る）。付けると**ハブの画面を開ける人（トークンを持つ人）なら誰でもこのコンテナの Claude に
 依頼を送れます**。既定では付けません。
 
 ```sh
@@ -327,8 +342,11 @@ nohup fatmax watch --replies > /tmp/fatmax-watch.log 2>&1 &
 devcontainer で毎回やらずに済ませたいなら、名前と繋ぎまでを入れておきます。
 
 ```json
-"postStartCommand": "sh -c 'mkdir -p ~/.claude && echo ec2-a/api > ~/.claude/fatmax-host && curl -fsSL http://host.docker.internal:8787/setup.sh | sh'"
+"postStartCommand": "sh -c 'mkdir -p ~/.claude && echo ec2-a/api > ~/.claude/fatmax-host && curl -fsSL -k --pinnedpubkey \"<指紋>\" \"https://host.docker.internal:8787/setup.sh?t=<トークン>\" | sh'"
 ```
+
+**この1行にはトークンが入ります。** devcontainer.json を git で共有しているなら、そのまま入れないでください
+（トークンを持つ人はハブの記録を読めます）。
 
 **postCreateCommand ではなく postStartCommand。** postCreate は作った1回だけで、
 コンテナを止めて開き直すと入り直しません。
@@ -337,7 +355,7 @@ devcontainer で毎回やらずに済ませたいなら、名前と繋ぎまで�
 
 ```sh
 dnf upgrade --refresh fatmax                        # install では上がりません
-curl -fsSL http://host.docker.internal:8787/setup.sh | sh
+curl -fsSL -k --pinnedpubkey '<指紋>' 'https://host.docker.internal:8787/setup.sh?t=<トークン>' | sh
 pkill -f 'fatmax watch'; fatmax watch &             # 動いているものは古いままなので入れ替える
 fatmax status
 ```
@@ -354,7 +372,8 @@ fatmax status
 ```
 
 **`--hub` は要りません**（5-3 で `~/.fatmax/hub` に保存されています）。
-まだ 5-3 をやっていないなら `fatmax status --hub http://host.docker.internal:8787` で見ます。
+まだ 5-3 をやっていないなら `fatmax status --hub https://host.docker.internal:8787` で見ます
+（指紋を覚えていないので「指紋が合いません」と出ます。5-3 をやれば消えます）。
 
 `✓ ハブ` `✓ ウォッチャー` `✓ hook` が並べば通っています。
 **hook が 0 件のまま**なら、まず Claude Code で何か1つ頼んでみてください。
@@ -367,8 +386,8 @@ fatmax status
   復帰後に順番どおり送ります（最大 5,000 件）。ウォッチャーを置かずに hook 直送にすると、
   **切れている間のイベントは消えます**。回線が切れる前提の EC2 では、ウォッチャーは実質必須です
 - **EC2 のホスト側には何も置きません。** 入れるのはコンテナの中だけです
-- 通信は http で暗号化されません。SSH トンネルの中は SSH が守りますが、
-  **EC2 ホスト 〜 コンテナ間は平文**です
+- ウォッチャーからハブへは TLS で暗号化され、トークンで認証されます（SSH トンネルの中も、
+  EC2 ホスト 〜 コンテナ間も）。hook → ウォッチャーはコンテナの中の `127.0.0.1` だけです
 
 ---
 
@@ -468,20 +487,20 @@ pkill -f 'fatmax watch'
 
 ```sh
 fatmax --version                          # ウォッチャー側
-curl -s http://127.0.0.1:8787/healthz     # ハブ側（トンネルの出口）
+curl -sk https://127.0.0.1:8787/healthz   # ハブ側（トンネルの出口）
 ```
 
 ウォッチャーは起動時にもハブと版を突き合わせています。`cat /tmp/fatmax.log` の先頭に
 `⚠ 版が違います` が出ていれば、その場で確定です。
 
-**違っていたら両方を 0.1.160 以上へ。片方だけでは直りません。**
+**違っていたら両方を 0.1.163 以上へ。片方だけでは直りません。**
 
 ```sh
 sudo dnf upgrade --refresh fatmax     # apt なら apt update && apt install --only-upgrade fatmax
 pkill -f 'fatmax watch'; fatmax watch &
 ```
 
-0.1.160 以降は、①古い名前でも訊き直す ②空振りしたら間隔を倍にする（1秒 → 最大60秒）
+0.1.163 以降は、①古い名前でも訊き直す ②空振りしたら間隔を倍にする（1秒 → 最大60秒）
 の2つが入っているので、版がズレてもこの輪には入りません。
 
 ### 段4: リクエストそのものが多い場合
@@ -520,7 +539,7 @@ sudo sysctl -w net.ipv4.tcp_tw_reuse=1
 `~/.claude` をマウントしている・使い続ける場合は:
 
 ```sh
-curl -fsSL http://host.docker.internal:8787/setup.sh | sh -s -- --uninstall
+curl -fsSL -k --pinnedpubkey '<指紋>' 'https://host.docker.internal:8787/setup.sh?t=<トークン>' | sh -s -- --uninstall
 pkill -f 'fatmax watch' || true
 dnf remove -y fatmax || rm -f /usr/local/bin/fatmax
 rm -rf ~/.claude/fatmax-host ~/.fatmax

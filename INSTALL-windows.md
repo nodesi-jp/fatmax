@@ -1,6 +1,6 @@
 # Windows で入れる（試験版）
 
-**Windows で動いている Claude Code を、LAN にあるハブへ繋ぐ**手順です。いま配っているのは `0.1.160` です。
+**Windows で動いている Claude Code を、LAN にあるハブへ繋ぐ**手順です。いま配っているのは `0.1.163` です。
 
 > **試験版です。実機の Windows ではまだ確かめていません。** スクリプトが読めて動くところまでは
 > PowerShell 7 で確かめてあります。うまく動かないときは、下の「うまくいかないとき」を見てください。
@@ -15,6 +15,7 @@ Windows に入れるのは **見たいマシン**の役目だけです。**ハ�
 - Windows 10 / 11（x86_64）
 - Windows 側で Claude Code が動いていること
 - ハブが LAN のどこかで動いていて、その IP が分かること
+- ハブの**指紋とトークン**（ハブの画面の「導入」に出ています。ハブのマシンでは `fatmax token`）
 
 ## 1. 一式を落として入れる
 
@@ -27,12 +28,17 @@ Expand-Archive fatmax-windows.zip . -Force
 .\fatmax-windows\install.cmd
 ```
 
-**ハブのアドレスを聞かれます。** `192.168.0.10:8787` のように、ハブの IP とポートを入れてください。
+**ハブのアドレス・指紋・トークンを順に聞かれます。** アドレスは `192.168.0.10:8787` のように、
+ハブの IP とポートを入れてください。指紋（`sha256//…`）とトークンはハブの画面の「導入」に出ています。
 聞かれたくないときは、最後の行に渡します。
 
 ```powershell
-.\fatmax-windows\install.cmd -Hub http://192.168.0.10:8787
+.\fatmax-windows\install.cmd -Hub https://192.168.0.10:8787 -Pin '<指紋>' -Token '<トークン>'
 ```
+
+通信は TLS で暗号化され、ハブへの接続はトークンで認証されます。ハブの証明書はハブが自分で作ったものなので、
+`fatmax.exe` は**名前ではなく指紋で**照合します（PowerShell の `irm` ではこの照合ができないので、
+ハブから取るものは全部 `fatmax.exe` が取ります）。
 
 一式の中身は3つです。
 
@@ -45,10 +51,10 @@ Expand-Archive fatmax-windows.zip . -Force
 `install.cmd` がやることは次のとおりです。
 
 1. `fatmax.exe` を `%USERPROFILE%\.fatmax\bin\` に置く（hook はここを見ます。場所は変えられません）
-2. **ハブに届くか確かめる。** 届かなければ、ここで止まります
-3. ハブの宛先を保存する（`%USERPROFILE%\.fatmax\hub` の1行）
-4. hook と OTel を入れる（ハブが配っている `setup.ps1`。ユーザ全体の `settings.json`）
-5. ウォッチャーを裏で動かす（ログは `%USERPROFILE%\.fatmax\watch.log`）
+2. ハブの宛先・指紋・トークンを保存する（`%USERPROFILE%\.fatmax\hub` と `known_hubs`）
+3. hook と OTel を入れる（ハブが配っている `setup.ps1` を `fatmax.exe fetch` で取る。ユーザ全体の `settings.json`）。
+   **取れなければ、ここで止まります**（届かない・指紋かトークンが違う）
+4. ウォッチャーを裏で動かす（ログは `%USERPROFILE%\.fatmax\watch.log`）
 
 終わったら **Claude Code を開き直してください**（OTel の設定は起動時にしか読まれません）。
 
@@ -71,7 +77,8 @@ PowerShell の `irm` で落とせば、この印は付きません。
 & "$HOME\.fatmax\bin\fatmax.exe" status
 ```
 
-Claude Code を1回動かしてからハブの画面（`http://<ハブの IP>:8787/`）を開き、その会話が出れば通っています。
+Claude Code を1回動かしてからハブの画面（`https://<ハブの IP>:8787/`）を開き、その会話が出れば通っています
+（最初の1回はトークンを入れます。証明書はハブが自分で作ったものなので、ブラウザは一度警告を出します）。
 
 ## ウォッチャーについて
 
@@ -104,7 +111,7 @@ Set-Content "$HOME\.claude\fatmax-host" '開発機-Win'
 
 ```powershell
 Get-Process fatmax -ErrorAction SilentlyContinue | Stop-Process
-& ([scriptblock]::Create((irm http://<ハブの IP>:8787/setup.ps1))) -Uninstall
+& ([scriptblock]::Create((& "$HOME\.fatmax\bin\fatmax.exe" fetch /setup.ps1 | Out-String))) -Uninstall
 Remove-Item -Recurse -Force "$HOME\.fatmax"
 ```
 
@@ -119,8 +126,10 @@ Remove-Item -Recurse -Force "$HOME\.fatmax"
 
 ## うまくいかないとき
 
-- **「ハブに届きません」で止まる** —— ハブの IP・ポートと、ハブ側のファイアウォールを確かめてください。
-  `Test-NetConnection <ハブの IP> -Port 8787` の `TcpTestSucceeded` が `True` なら届いています
+- **「ハブから取れません」で止まる** —— ハブの IP・ポートと、ハブ側のファイアウォールを確かめてください。
+  `Test-NetConnection <ハブの IP> -Port 8787` の `TcpTestSucceeded` が `True` なら届いています。
+  届いているのに止まるなら、指紋かトークンが違います（`fatmax.exe setup` の出力に「知らないハブです」
+  「トークンが通りません」のどちらかが出ています）
 - **「Windows によって PC が保護されました」** —— 署名していないためです。「詳細情報」→「実行」で進めるか、
   上の `irm` で落とし直してください（`install.ps1` は置いた `fatmax.exe` の印を外しています）
 - **「このシステムではスクリプトの実行が無効」** —— `install.ps1` を直に動かしています。`install.cmd` から動かしてください

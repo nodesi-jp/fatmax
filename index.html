@@ -67,10 +67,10 @@ chmod +x /usr/local/bin/fatmax &amp;&amp; fatmax hub</pre>
 
 <h2>使う</h2>
 <pre>fatmax status
-# → http://&lt;このマシンの IP&gt;:8787/
+# → https://&lt;このマシンの IP&gt;:8787/   （最初の1回は fatmax token の「画面:」の URL で開く）
 
-# 見たいマシンで1回だけ
-curl -fsSL http://&lt;ハブの IP&gt;:8787/setup.sh | sh</pre>
+# 見たいマシンで1回だけ（ハブの画面の「導入」に出ている1行。指紋とトークン入り）
+curl -fsSL -k --pinnedpubkey '&lt;指紋&gt;' 'https://&lt;ハブの IP&gt;:8787/setup.sh?t=&lt;トークン&gt;' | sh</pre>
 
 <h2>詳しく</h2>
 <p><a href="https://nodesi-jp.github.io/fatmax/README.md">README</a>
@@ -84,7 +84,7 @@ curl -fsSL http://&lt;ハブの IP&gt;:8787/setup.sh | sh</pre>
  ／ <a href="https://nodesi-jp.github.io/fatmax/INSTALL-wsl.md">Windows + WSL(Ubuntu)</a></p>
 
 <small>
-認証はありません。LAN 内で使う前提です。Linux は amd64 / arm64、macOS は Apple Silicon。<br>
+通信は TLS で暗号化し、接続はトークンで認証します。LAN 内で使う前提です（インターネットへ直接は晒さない）。Linux は amd64 / arm64、macOS は Apple Silicon。<br>
 Claude および Claude Code は Anthropic の商標です。本ソフトウェアは Anthropic とは無関係の
 第三者製ツールで、Anthropic による承認・提供を受けたものではありません。
 </small>

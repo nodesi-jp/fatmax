@@ -103,12 +103,18 @@ fi
 exec fatmax "$@"
 EOF
 
+# FATMAX_DB: **`docker compose exec hub fatmax token` が同じ記録を見るため**（README の設計判断12）。
+# exec は entrypoint を通らないので `--db` が付かず、root のホーム（/root/.fatmax）を見に行って
+# 「トークンがありません」になる。ハブ自身は entrypoint が `--db` を渡すので、どちらでも同じ場所。
 ENV TZ=Asia/Tokyo \
-    FATMAX_DIST=/opt/fatmax/dist
+    FATMAX_DIST=/opt/fatmax/dist \
+    FATMAX_DB=/var/lib/fatmax/fatmax.db
 WORKDIR /var/lib/fatmax
 VOLUME /var/lib/fatmax
 EXPOSE 8787
-# /healthz は版と件数を返すだけ（COUNT(*) が5つ）。30 秒に1回なら気にならない。
+# /healthz は認証なしでも答える（版と指紋だけ。README の設計判断12）。**平文のまま叩く** ——
+# ハブは同じポートで平文も受け、/healthz は平文でも通す。https にすると、自分で作った証明書を
+# curl に照合させる手間がここにも要る（コンテナの中なので経路に人は居ない）。
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD curl -fsS -o /dev/null http://127.0.0.1:8787/healthz || exit 1
 ENTRYPOINT ["/usr/bin/tini", "--", "fatmax-entrypoint"]

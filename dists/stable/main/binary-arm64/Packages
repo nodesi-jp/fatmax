@@ -1,14 +1,14 @@
 Package: fatmax
-Version: 0.1.160
+Version: 0.1.163
 Architecture: arm64
 Maintainer: fatmax <kouji_morimoto@nodesi.jp>
-Installed-Size: 6120
+Installed-Size: 7972
 Depends: adduser
-Filename: pool/main/f/fatmax/fatmax_0.1.160_arm64.deb
-Size: 1928792
-MD5sum: cae818e3af36d9946b07cab75ad529f5
-SHA1: d3629cd41b5138446534702690bed86550e0f35e
-SHA256: 38726119529b590f939abed9a44249ff95a5df4f86852ceb58a3763c985198b0
+Filename: pool/main/f/fatmax/fatmax_0.1.163_arm64.deb
+Size: 2558260
+MD5sum: 5e828ad4847993ea7f2f3f03c48ae66f
+SHA1: 963b97d23a961982e32bd5d20cfdcb10866d2582
+SHA256: 13c157aaa0fb089e47998660de1a7a205c3cff7a3ec88fd57ac534a16e558767
 Section: utils
 Priority: optional
 Homepage: https://github.com/nodesi-jp/fatmax
@@ -19,10 +19,11 @@ Description: Claude Code のセッションを1画面に集約する (LAN 専用
  実行ファイルは1つで、起動時に役目を選びます:
  .
    fatmax hub      集約する1台で。画面と記録はここに集まる
-   fatmax relay    見たいマシンに置くウォッチャー（任意）
+   fatmax watch    見たいマシンで動かすウォッチャー（必須）
  .
- 1台だけで使うならウォッチャーは要りません。hook はハブへ直接届き、そのマシンの
- transcript もハブが自分で読みます。
+ hook の宛先はウォッチャー1本で、ハブへはウォッチャーだけが送ります
+ （0.1.85 でハブ直を廃止）。
  .
- 認証はありません。LAN 内で使う前提です。
+ 通信は TLS で暗号化し、ハブへの接続はトークンで認証します
+ （証明書はハブが自分で作ります）。
 

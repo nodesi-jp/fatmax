@@ -1,21 +1,21 @@
 # Windows + WSL(Ubuntu)
 
 **ハブは WSL の Ubuntu で動かし、記録するのは Windows 側の Claude Code** という構成です。
-画面は Windows のブラウザから `http://127.0.0.1:8787/` で開きます。
+画面は Windows のブラウザから `https://127.0.0.1:8787/` で開きます。
 
 **なぜ WSL にハブを置くか。** Windows 版の実行ファイルには署名を付けていないので、
 SmartScreen と Smart App Control に止められます。Linux の実行ファイルにはどちらも
 効かないので、**常駐させるハブだけ WSL に置くと、署名の問題がハブには掛かりません**
 （Windows 側のウォッチャーは `fatmax.exe` です。入れるときに Web から来た印を外します）。
 
-いま配っているのは `0.1.160` です。
+いま配っているのは `0.1.163` です。
 
 ## 前提
 
 - Windows 10/11 + WSL2（`wsl --install`。未導入なら再起動が要ります）
 - WSL のディストリビューションが Ubuntu（`wsl -l -v` で確認）
 - Windows 側で Claude Code が動いていること —— **記録したいのはそちら**です
-- fatmax に認証はありません。LAN 内での利用が前提です
+- 通信は TLS で暗号化され、ハブへの接続はトークンで認証されます（既定）。それでも LAN 内での利用が前提です
 
 ## 全体像
 
@@ -78,9 +78,21 @@ nohup fatmax hub > /tmp/fatmax-hub.log 2>&1 &
 
 ## 3. Windows のブラウザで開けることを確かめる
 
+トークン・指紋・導入の1行は WSL 側でこれで出ます（4. でも使います）:
+
+```sh
+sudo -u fatmax fatmax token --db /var/lib/fatmax/fatmax.db   # systemd で動かしているとき
+fatmax token                                                 # nohup で自分で動かしているとき
 ```
-http://127.0.0.1:8787/
+
+出てきた `画面:` の URL の IP を `127.0.0.1` にして開きます（トークン入りなのでそのままログインできます）:
+
 ```
+https://127.0.0.1:8787/login?token=<トークン>
+```
+
+証明書はハブが自分で作ったものなので、**ブラウザは最初に一度警告を出します**
+（消したいなら `https://127.0.0.1:8787/ca.pem` を Windows に信頼させる）。
 
 **ここが開けてから 4. へ進んでください。** 4. がこの経路にそのまま乗ります。
 開けないときは下の「うまくいかないとき」へ。
@@ -96,8 +108,10 @@ http://127.0.0.1:8787/
 cd $env:TEMP
 irm https://nodesi-jp.github.io/fatmax/windows/fatmax-windows.zip -OutFile fatmax-windows.zip
 Expand-Archive fatmax-windows.zip . -Force
-.\fatmax-windows\install.cmd -Hub http://127.0.0.1:8787
+.\fatmax-windows\install.cmd -Hub https://127.0.0.1:8787 -Pin '<指紋>' -Token '<トークン>'
 ```
+
+指紋とトークンは 3. の `fatmax token` が出したものです（渡さなければ聞かれます）。
 
 `fatmax.exe` を `%USERPROFILE%\.fatmax\bin\` に置き、hook と OTel を入れ、ウォッチャーを裏で動かします。
 **ウォッチャーを動かさないと、記録はハブへ上がりません**（宛先はウォッチャー1本です。溜まるだけで消えはしません）。
@@ -112,7 +126,7 @@ hook の保存先を `-Scope` で選びたい・ウォッチャーがサイン�
 & "$HOME\.fatmax\bin\fatmax.exe" status
 ```
 
-Claude Code を1回動かしてから `http://127.0.0.1:8787/` を開き、その会話が出れば通っています。
+Claude Code を1回動かしてから `https://127.0.0.1:8787/` を開き、その会話が出れば通っています。
 
 ---
 
@@ -148,7 +162,7 @@ sudo systemctl restart fatmax-hub        # systemd で動かしている場合
 
 ```powershell
 & "$HOME\.fatmax\bin\fatmax.exe" --version      # Windows 側
-irm http://127.0.0.1:8787/healthz               # ハブ側
+& "$HOME\.fatmax\bin\fatmax.exe" fetch /healthz   # ハブ側（irm はハブの証明書を照合できないので fatmax.exe で）
 ```
 
 ---
@@ -158,7 +172,7 @@ irm http://127.0.0.1:8787/healthz               # ハブ側
 ## Windows 側
 
 ```powershell
-& ([scriptblock]::Create((irm http://127.0.0.1:8787/setup.ps1))) -Uninstall
+& ([scriptblock]::Create((& "$HOME\.fatmax\bin\fatmax.exe" fetch /setup.ps1 | Out-String))) -Uninstall
 ```
 
 `settings.json` から fatmax の hook と statusLine **だけ**を外します。あなた自身の設定は残ります。
@@ -199,7 +213,7 @@ rm -rf ~/.fatmax                 # 自分で fatmax hub を動かしていた場
 
 | 症状 | 見るところ |
 |---|---|
-| Windows のブラウザで `127.0.0.1:8787` が開けない | WSL の中で `curl -s localhost:8787/healthz`。返るなら Windows 側の問題、返らないならハブが上がっていない |
+| Windows のブラウザで `127.0.0.1:8787` が開けない | WSL の中で `curl -sk https://localhost:8787/healthz`。返るなら Windows 側の問題、返らないならハブが上がっていない |
 | WSL の中では開けるのに Windows から開けない | ハブが `127.0.0.1` にだけ張り付いている。`ss -tlnp \| grep 8787` が `0.0.0.0:8787` になっているか |
 | `wsl --shutdown` のあと届かない | ハブが上がっていません。systemd を使っていないなら `nohup` で上げ直す（自動では上がりません） |
 | 画面にこのマシンが出ない | ウォッチャーが動いていない。`& "$HOME\.fatmax\bin\fatmax.exe" status` で確かめる |

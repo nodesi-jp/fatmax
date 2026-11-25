@@ -2,7 +2,7 @@
 
 **ハブ（画面と記録を集める1台）を Docker のコンテナで動かす**手順です。
 中身は [apt で入れる](INSTALL.md) のと同じ `fatmax` パッケージで、Debian のコンテナに入れて動かすだけです。
-systemd の無いマシンや、ホストに直接入れたくないときに使います。いま配っているのは `0.1.160` です。
+systemd の無いマシンや、ホストに直接入れたくないときに使います。いま配っているのは `0.1.163` です。
 
 - コンテナの中で Claude Code を動かしていて、そのコンテナだけ見たい → **[コンテナ1つで完結](INSTALL-container.md)**
 - Docker を使わない入れ方 → **[install](INSTALL.md)**
@@ -47,27 +47,39 @@ Linux で `docker` に `sudo` が要るなら、`sudo docker compose …` でそ
 こう出れば動いています。初回は 20 秒ほどかかります。
 
 ```
-fatmax hub  版 0.1.160 (…)
-fatmax hub listening on http://0.0.0.0:8787/
-  LAN:   http://192.168.0.21:8787/  (FATMAX_LAN_IP)
-  setup: curl -fsSL http://192.168.0.21:8787/setup.sh | sh
+fatmax hub  版 0.1.163 (…)
+fatmax hub listening on https://0.0.0.0:8787/
+  LAN:   https://192.168.0.21:8787/  (FATMAX_LAN_IP)
+  画面:  https://192.168.0.21:8787/login?token=<トークン>
+  指紋:  sha256//…
+  setup: curl -fsSL -k --pinnedpubkey 'sha256//…' 'https://192.168.0.21:8787/setup.sh?t=<トークン>' | sh
   db:    /var/lib/fatmax/fatmax.db
 ```
 
-画面は `http://<このマシンの IP>:8787/` です。**認証はありません。** LAN の外に出さないでください。
+画面は `https://<このマシンの IP>:8787/` です。**最初の1回はログの `画面:` の URL で開きます**
+（トークンが入っているので、そのままログインできます。あとはブラウザが覚えます）。
+通信は TLS で暗号化され、接続はトークンで認証されます。証明書はハブが自分で作ったものなので、
+**ブラウザは最初に一度警告を出します**（消したいなら `https://<IP>:8787/ca.pem` を OS に信頼させる）。
+それでも**インターネットへ直接は晒さないでください**（LAN の中だけ。外から使うなら VPN の内側に）。
+
+トークン・指紋・導入の1行は、あとからでも出せます（ログが流れてしまったとき）:
+
+```sh
+docker compose exec hub fatmax token
+```
 
 | 渡すもの | 既定 | 意味 |
 |---|---|---|
 | `FATMAX_LAN_IP` | なし | **ほかのマシンから届く、このマシンの IP**。下の注記 |
 | `TZ` | `Asia/Tokyo` | 日の境目。日別の金額・検索の「今日」・1日ぶんのタイムラインはこの土地の 0時で切る |
-| `FATMAX_PORT` | `8787` | 外に出すポート（compose.yaml の左側だけ変わる）。**起動ログの `:8787` はコンテナの中の番号なので変わりません** —— 変えたら `setup:` の1行のポートだけ書き換える（`curl -fsSL http://<IP>:<FATMAX_PORT>/setup.sh \| sh`。setup.sh の中身は、取りに行ったポートで作られる） |
+| `FATMAX_PORT` | `8787` | 外に出すポート（compose.yaml の左側だけ変わる）。**起動ログの `:8787` はコンテナの中の番号なので変わりません** —— 変えたら `setup:` の1行の URL のポートだけ書き換える（`'https://<IP>:<FATMAX_PORT>/setup.sh?t=<トークン>'`。setup.sh の中身は、取りに行ったポートで作られる） |
 
 ### rootless の Docker で動かすとき
 
 起動はそのまま通りますが、**2つ足さないと使えません**。
 
 ```sh
-# ① LAN から届くようにする（LAN の中だけ。ハブには認証が無いので外には開けない）
+# ① LAN から届くようにする（LAN の中だけ。暗号化と認証はあるが、外には開けない）
 sudo ufw allow from 192.168.0.0/24 to any port 8787 proto tcp
 # ② ログアウト・再起動で止めない
 systemctl --user enable docker
@@ -84,17 +96,21 @@ sudo loginctl enable-linger $(whoami)
 
 ## 3. 各マシンを繋ぐ
 
-ここから先は [install](INSTALL.md) と同じです。見たいマシンで、ログに出た `setup:` の1行を叩きます。
+ここから先は [install](INSTALL.md) と同じです。見たいマシンで、ログに出た `setup:` の1行を叩きます
+（画面の「導入」にも、`docker compose exec hub fatmax token` にも同じ1行が出ます）。
 
 ```sh
-curl -fsSL http://<このマシンの IP>:8787/setup.sh | sh
+curl -fsSL -k --pinnedpubkey '<指紋>' 'https://<このマシンの IP>:8787/setup.sh?t=<トークン>' | sh
 ```
 
+`-k` は「証明書の発行元を問わない」、`--pinnedpubkey` は「でも鍵が指紋と違えば切る」です。
+2つ揃って、このハブにだけ繋がります（名前ではなく鍵で照合するので、IP が動いても繋がる）。
+
 **ハブを動かしているマシン自身の Claude Code も見るなら**、宛先を `127.0.0.1` にします。
-公開したポートに届くので、DHCP で IP が動いても外れません。
+公開したポートに届くので、DHCP で IP が動いても外れません（指紋は同じハブなので同じ）。
 
 ```sh
-curl -fsSL http://127.0.0.1:8787/setup.sh | sh -s -- --hub http://127.0.0.1:8787
+curl -fsSL -k --pinnedpubkey '<指紋>' 'https://127.0.0.1:8787/setup.sh?t=<トークン>' | sh -s -- --hub https://127.0.0.1:8787
 ```
 
 ## 新しい版に上げる
