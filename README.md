@@ -128,7 +128,22 @@ fatmax が**気づかせます**。人間の無駄時間をゼロに近づける
 ## install
 
 **ハブ**（画面と記録を集める1台）を LAN に1台立て、**見たいマシン**それぞれにウォッチャーを置きます。
-いま配っているのは `0.1.181`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon、Windows は x86_64 です。
+いま配っているのは `0.1.182`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon、Windows は x86_64 です。
+
+### 見たいマシンは、Claude Code のプラグインで入れられます（macOS / Linux / Windows 共通）
+
+ハブを立てたら、見たいマシンの **Claude Code で次の3行**を打ちます。hook と会話担当エージェントはプラグインが持ち、
+`/fatmax:setup` がウォッチャー（実行ファイル）を置いて、ハブの宛先・指紋・トークンを保存し、ウォッチャーを起こします。
+
+```
+/plugin marketplace add nodesi-jp/fatmax
+/plugin install fatmax@fatmax
+/fatmax:setup <ハブの画面の「導入」に出ている1行>
+```
+
+- `/fatmax:setup` に渡す1行は、ハブの画面の「導入」（ハブのマシンなら `fatmax token`）に出ています
+- **Windows は Git for Windows（Git Bash）が要ります**（Claude Code が hook を bash で動かすため）。詳しくは [Windows](INSTALL-windows.md)
+- 入れたら Claude Code を開き直し、1回やりとりしてから `fatmax status` の「通った数 hook」が 1 以上か見てください
 
 **入れ方ごとの手順書**（どれも、入れる → 繋ぐ → 上げる → 外す までを1枚に）:
 

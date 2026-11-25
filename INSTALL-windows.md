@@ -1,6 +1,6 @@
 # Windows で入れる（試験版）
 
-**Windows で動いている Claude Code を、LAN にあるハブへ繋ぐ**手順です。いま配っているのは `0.1.181` です。
+**Windows で動いている Claude Code を、LAN にあるハブへ繋ぐ**手順です。いま配っているのは `0.1.182` です。
 
 > **試験版です。** 入れる・入れ直す・外すは PowerShell 7 で確かめてあります。`install.cmd` が使う
 > Windows PowerShell 5.1 は文字コードの扱いが 7 と違うので、その違いには合わせてありますが、
@@ -27,6 +27,24 @@ Windows に入れるのは **見たいマシン**の役目だけです。**ハ�
 - Windows 側で Claude Code が動いていること
 - ハブが LAN のどこかで動いていて、その IP が分かること
 - ハブの**指紋とトークン**（ハブの画面の「導入」に出ています。ハブのマシンでは `fatmax token`）
+
+## いちばん簡単: Claude Code のプラグインで入れる
+
+Windows の **Claude Code で**、次の3行を打ちます（PowerShell ではありません。Claude Code の入力欄です）。
+
+```
+/plugin marketplace add nodesi-jp/fatmax
+/plugin install fatmax@fatmax
+/fatmax:setup <ハブの画面の「導入」に出ている1行>
+```
+
+- `/fatmax:setup` が、この下の「1. 一式を落として入れる」と同じことを Claude に流させます（実行ファイルを置く・宛先と指紋とトークンを
+  保存する・ウォッチャーを窓で起こす）。hook と会話担当エージェント（fatmax-room など）はプラグインが持つので、settings.json には書きません
+- **Git for Windows（Git Bash）が要ります。** Claude Code は Windows でも hook を bash で動かします（プラグインの hook も同じ）
+- 前に「1.」の手順で入れていた場合も、そのまま `/fatmax:setup` で大丈夫です（settings.json の古い hook は外します。2組並ぶと2回届くため）
+- 入れたら **Claude Code を開き直し**、1回やりとりしてから「2. 確かめる」の `fatmax status` で「通った数 hook」が 1 以上か見てください
+
+プラグインを使わない場合は、次の「1.」の手順で入れられます。
 
 ## 1. 一式を落として入れる
 

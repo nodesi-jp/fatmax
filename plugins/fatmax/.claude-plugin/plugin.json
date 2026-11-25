@@ -1,0 +1,11 @@
+{
+  "name": "fatmax",
+  "version": "0.1.182",
+  "description": "このマシンの Claude Code の動きを fatmax のハブへ送る（hook・会話担当エージェント・ウォッチャーの導入コマンド）",
+  "homepage": "https://nodesi-jp.github.io/fatmax/",
+  "license": "Proprietary",
+  "author": {
+    "name": "fatmax",
+    "url": "https://github.com/nodesi-jp/fatmax"
+  }
+}

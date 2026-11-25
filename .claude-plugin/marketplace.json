@@ -1,0 +1,13 @@
+{
+  "name": "fatmax",
+  "owner": { "name": "fatmax" },
+  "metadata": { "description": "fatmax（LAN の複数マシンの Claude Code を1画面に集めるダッシュボード）の Claude Code プラグイン" },
+  "plugins": [
+    {
+      "name": "fatmax",
+      "source": "./plugins/fatmax",
+      "description": "このマシンの Claude Code の動きを fatmax のハブへ送る（hook・会話担当エージェント・ウォッチャーの導入コマンド）",
+      "version": "0.1.182"
+    }
+  ]
+}
