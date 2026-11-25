@@ -5,9 +5,10 @@
 
 **なぜ WSL にハブを置くか。** Windows 版の実行ファイルには署名を付けていないので、
 SmartScreen と Smart App Control に止められます。Linux の実行ファイルにはどちらも
-効かないので、**常駐させるハブだけ WSL に置くと署名の問題を丸ごと避けられます**。
+効かないので、**常駐させるハブだけ WSL に置くと、署名の問題がハブには掛かりません**
+（Windows 側のウォッチャーは `fatmax.exe` です。入れるときに Web から来た印を外します）。
 
-いま配っているのは `0.1.158` です。
+いま配っているのは `0.1.159` です。
 
 ## 前提
 
@@ -21,8 +22,8 @@ SmartScreen と Smart App Control に止められます。Linux の実行ファ�
 | どこ | 何を入れるか | 役目 |
 |---|---|---|
 | **WSL Ubuntu** | `fatmax`（apt） | ハブ。記録を溜めて画面を出す |
-| **Windows** | `settings.json` の hook + OTel | Claude Code の動きをハブへ送る |
-| **Windows**（任意） | `fatmax.exe` | 好きなマシン名を付ける・ハブが落ちている間ぶんを残す |
+| **Windows** | `settings.json` の hook + OTel | Claude Code の動きをウォッチャーへ渡す |
+| **Windows** | `fatmax.exe`（ウォッチャー） | ハブへ送る。ハブが落ちている間ぶんを溜めて送り直す |
 
 Windows と WSL2 は **localhost を共有**します。Windows から `127.0.0.1:8787` を叩けば
 WSL の中のハブに届くので、**IP を調べる必要はありません**（WSL2 の IP は再起動で
@@ -84,93 +85,31 @@ http://127.0.0.1:8787/
 **ここが開けてから 4. へ進んでください。** 4. がこの経路にそのまま乗ります。
 開けないときは下の「うまくいかないとき」へ。
 
-## 4. Windows 側に hook を入れる
+## 4. Windows 側に入れる
+
+**[Windows で入れる](INSTALL-windows.md) の一式**を使います。宛先は `127.0.0.1` です
+（Windows と WSL2 は localhost を共有するので、IP を調べる必要がありません）。
 
 **Windows の PowerShell で**（管理者である必要はありません）:
 
 ```powershell
-irm http://127.0.0.1:8787/setup.ps1 | iex
+cd $env:TEMP
+irm https://nodesi-jp.github.io/fatmax/windows/fatmax-windows.zip -OutFile fatmax-windows.zip
+Expand-Archive fatmax-windows.zip . -Force
+.\fatmax-windows\install.cmd -Hub http://127.0.0.1:8787
 ```
 
-`settings.json` に hook と OTel の設定を足します。**あなた自身の設定は消しません。**
-ステータス行は既定で入れません（出したいなら `-StatusLine`）。
+`fatmax.exe` を `%USERPROFILE%\.fatmax\bin\` に置き、hook と OTel を入れ、ウォッチャーを裏で動かします。
+**ウォッチャーを動かさないと、記録はハブへ上がりません**（宛先はウォッチャー1本です。溜まるだけで消えはしません）。
+終わったら **Claude Code を開き直してください**（OTel の設定は起動時にしか読まれません）。
 
-保存先は `-Scope` で選べます（既定は `user`）。**2箇所に入れるとイベントが二重に記録され、
-回数もコストも倍になります。** 入っていれば警告が出ます。
+hook の保存先を `-Scope` で選びたい・ウォッチャーがサインアウトで止まったとき・名前の付け方は
+[Windows で入れる](INSTALL-windows.md) にあります。
 
-```powershell
-& ([scriptblock]::Create((irm http://127.0.0.1:8787/setup.ps1))) -Scope local
-```
-
-| `-Scope` | 書く先 | 効く範囲 |
-|---|---|---|
-| `user`（既定） | `$HOME\.claude\settings.json` | 全プロジェクト |
-| `project` | `<cwd>\.claude\settings.json` | リポジトリで共有（git に入る） |
-| `local` | `<cwd>\.claude\settings.local.json` | このチェックアウトだけ |
-
-`project` / `local` は **PowerShell を開いている場所**に書きます。Claude Code を開いている
-フォルダで実行しないと読まれません（それでもファイルは書けるので「成功」と出ます）。
-
-モデル別のトークン内訳も取るなら `-Otel` を足します（反映には Claude Code の再起動が要ります）。
-
-**5. と 6. まで進めてください。** 宛先はウォッチャー1本なので、実行ファイルを置いて
-`fatmax watch` を動かすまで、記録はディスクに溜まるだけでハブへは上がりません。
-
-## 5.（任意）Windows 側に実行ファイルを置く
-
-置くと2つ変わります。
-
-- **画面に出る名前を自分で決められる。** 置かない場合は `%COMPUTERNAME%` 固定です
-  （cmd.exe の1行ではファイルを読めないため）
-- **ハブが落ちている間ぶんが消えない。** 送れなかったものをディスクに溜め、次に送り直します
-
-**Windows の PowerShell で:**
+## 5. 確認
 
 ```powershell
-mkdir "$HOME\.fatmax\bin" -Force
-irm http://127.0.0.1:8787/hub/bin/windows -OutFile "$HOME\.fatmax\bin\fatmax.exe"
-& "$HOME\.fatmax\bin\fatmax.exe" --version
-```
-
-置き場所は **`%USERPROFILE%\.fatmax\bin\fatmax.exe` でなければいけません。** hook の1行が
-この場所を見て、あれば使う・無ければ curl に落ちる、という判断を**毎回**します
-（hook を入れ直す必要はありません）。
-
-> **`irm` で落とすこと。** ブラウザで落とすと「Web から来たファイル」の印が付き、
-> SmartScreen が止めます。**中身の問題ではありません。** 既に付いてしまったら
-> `Unblock-File "$HOME\.fatmax\bin\fatmax.exe"`、あるいは警告画面で「詳細情報」→「実行」です。
-
-名前は**送るたびに読み直される**ので、書き換えるだけで変わります（入れ直しは不要）。
-
-```powershell
-"開発機" | Out-File -Encoding ascii "$HOME\.claude\fatmax-host"
-```
-
-宛先も一度だけ教えておきます。
-
-```powershell
-& "$HOME\.fatmax\bin\fatmax.exe" setup
-```
-
-## 6.（さらに任意）ウォッチャーを動かす
-
-**これは必須です。** 宛先はウォッチャー1本（ハブ直はありません）なので、
-これを動かすまでハブには1件も上がりません。**消えはしません** —— hook は送る前に
-`~/.fatmax/spool` へ置くので、動かせば溜まっていたぶんがまとめて流れます。
-
-動かすと、hook では取れないものも入ります —— **返事を待たずに打ち込んだ指示**と、
-**Esc で止めた印**です（どちらも transcript を読まないと分かりません）。
-
-```powershell
-& "$HOME\.fatmax\bin\fatmax.exe" watch
-```
-
-閉じると止まります。**Windows では自己更新しません**（動いている `.exe` は置き換えられないため）。
-
-## 7. 確認
-
-```powershell
-& "$HOME\.fatmax\bin\fatmax.exe" status     # 置いた場合
+& "$HOME\.fatmax\bin\fatmax.exe" status
 ```
 
 Claude Code を1回動かしてから `http://127.0.0.1:8787/` を開き、その会話が出れば通っています。
@@ -193,18 +132,10 @@ sudo systemctl restart fatmax-hub        # systemd で動かしている場合
 **入れ替わるのはファイルだけです。** 動いているプロセスは古い実行ファイルを掴んだままなので、
 **再起動するまで版は変わりません**。忘れると `fatmax status` がそう言います。
 
-## Windows の実行ファイル
+## Windows 側
 
-**落とし直してください。** Windows では自己更新しません（動いている `.exe` は
-置き換えられないため）。**先に止めてから**置き換えます。
-
-```powershell
-Get-Process fatmax -ErrorAction SilentlyContinue | Stop-Process
-irm http://127.0.0.1:8787/hub/bin/windows -OutFile "$HOME\.fatmax\bin\fatmax.exe"
-& "$HOME\.fatmax\bin\fatmax.exe" --version
-```
-
-hook の1行は場所しか見ていないので、**入れ直す必要はありません。**
+**4. と同じ手順をもう一度**叩きます。Windows では自分で上がりません（動いている `.exe` は
+置き換えられないため）。`install.cmd` が動いているウォッチャーを止めてから置き換え、もう一度動かします。
 
 ## 版は必ず揃えてください
 
@@ -271,11 +202,11 @@ rm -rf ~/.fatmax                 # 自分で fatmax hub を動かしていた場
 | Windows のブラウザで `127.0.0.1:8787` が開けない | WSL の中で `curl -s localhost:8787/healthz`。返るなら Windows 側の問題、返らないならハブが上がっていない |
 | WSL の中では開けるのに Windows から開けない | ハブが `127.0.0.1` にだけ張り付いている。`ss -tlnp \| grep 8787` が `0.0.0.0:8787` になっているか |
 | `wsl --shutdown` のあと届かない | ハブが上がっていません。systemd を使っていないなら `nohup` で上げ直す（自動では上がりません） |
-| 画面に出る名前が `%COMPUTERNAME%` のまま | 5. の実行ファイルを置いていない、または置き場所が違う。`%USERPROFILE%\.fatmax\bin\fatmax.exe` 固定です |
+| 画面にこのマシンが出ない | ウォッチャーが動いていない。`& "$HOME\.fatmax\bin\fatmax.exe" status` で確かめる |
 | 名前を書き換えたのに変わらない | ファイルが UTF-16 で保存されています。`Out-File -Encoding ascii` で書き直す |
 | 回数とコストが倍 | hook が2箇所（user と project など）に入っています。片方を `-Uninstall` |
 | 「Windows によって PC が保護されました」 | 署名していない実行ファイルです。`irm` で落とすか `Unblock-File` |
-| 実行中に差し込んだ指示・Esc の印が出ない | 6. のウォッチャーが動いていません。hook だけでは取れません |
+| 実行中に差し込んだ指示・Esc の印が出ない | ウォッチャーが動いていません。hook だけでは取れません |
 | 接続が止まらない・ポートが枯れる | 版のズレ。上の「版は必ず揃えてください」 |
 
 **LAN の他のマシンからも画面を見たい場合**は追加の設定が要ります。WSL2 は既定で NAT の

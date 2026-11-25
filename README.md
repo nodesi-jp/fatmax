@@ -127,23 +127,31 @@ fatmax が**気づかせます**。人間の無駄時間をゼロに近づける
 
 ## install
 
-**入れるのは集約する1台だけ**です。見たいマシンには何も置きません。
-いま配っているのは `0.1.158`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon です。
+**ハブ**（画面と記録を集める1台）を LAN に1台立て、**見たいマシン**それぞれにウォッチャーを置きます。
+いま配っているのは `0.1.159`、CPU は Linux が amd64 / arm64、macOS は Apple Silicon、Windows は x86_64 です。
 
-- **[install](INSTALL.md)** — Ubuntu / Debian（apt）、Amazon Linux / Fedora / RHEL（dnf）、
-  macOS。見たいマシンの繋ぎ方、
+**入れ方ごとの手順書**（どれも、入れる → 繋ぐ → 上げる → 外す までを1枚に）:
+
+| 入れ方 | 対象 | ハブ | 見たいマシン |
+|---|---|---|---|
+| **[apt](INSTALL-apt.md)** | Ubuntu / Debian（WSL の Ubuntu を含む） | ○ | ○ |
+| **[dnf](INSTALL-dnf.md)** | Amazon Linux 2023 / Fedora / RHEL | ○ | ○ |
+| **[Windows](INSTALL-windows.md)**（試験版） | Windows 10 / 11 | — | ○ |
+| **[Docker](INSTALL-docker.md)** | Docker（Compose 付き）があるマシン | ○ | — |
+
+構成ごとの手順:
+
+- **[install（詳しい説明）](INSTALL.md)** — macOS、パッケージを使わない Linux、見たいマシンの繋ぎ方、
   ウォッチャー、確認、アンインストールまで
-- **[ハブを Docker で動かす](INSTALL-docker.md)** — ファイル2つを置いて `docker compose up` するだけ。
-  中身は apt と同じパッケージ
 - **[コンテナ1つで完結](INSTALL-container.md)** — Docker コンテナで Claude Code を動かしていて、
   そのコンテナだけ見る。**ハブを起動するだけ**
 - **[複数 EC2 × 複数コンテナ](INSTALL-ec2.md)** — 手元の WSL Ubuntu にハブ、
   EC2 のコンテナそれぞれにウォッチャー
 - **[Windows + WSL(Ubuntu)](INSTALL-wsl.md)** — ハブを WSL の Ubuntu で動かし、
-  Windows 側の Claude Code を記録する。署名の問題を丸ごと避けられます
+  Windows 側の Claude Code を記録する（Windows 側は [Windows の一式](INSTALL-windows.md)）
 
 ```sh
-sudo apt install fatmax && sudo systemctl enable --now fatmax-hub   # ← 鍵と sources.list の追加は INSTALL.md
+sudo apt install fatmax && sudo systemctl enable --now fatmax-hub   # ← 鍵と sources.list の追加は INSTALL-apt.md
 ```
 
 ---

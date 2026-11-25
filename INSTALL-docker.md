@@ -2,7 +2,7 @@
 
 **ハブ（画面と記録を集める1台）を Docker のコンテナで動かす**手順です。
 中身は [apt で入れる](INSTALL.md) のと同じ `fatmax` パッケージで、Debian のコンテナに入れて動かすだけです。
-systemd の無いマシンや、ホストに直接入れたくないときに使います。いま配っているのは `0.1.158` です。
+systemd の無いマシンや、ホストに直接入れたくないときに使います。いま配っているのは `0.1.159` です。
 
 - コンテナの中で Claude Code を動かしていて、そのコンテナだけ見たい → **[コンテナ1つで完結](INSTALL-container.md)**
 - Docker を使わない入れ方 → **[install](INSTALL.md)**
@@ -47,7 +47,7 @@ Linux で `docker` に `sudo` が要るなら、`sudo docker compose …` でそ
 こう出れば動いています。初回は 20 秒ほどかかります。
 
 ```
-fatmax hub  版 0.1.158 (…)
+fatmax hub  版 0.1.159 (…)
 fatmax hub listening on http://0.0.0.0:8787/
   LAN:   http://192.168.0.21:8787/  (FATMAX_LAN_IP)
   setup: curl -fsSL http://192.168.0.21:8787/setup.sh | sh
@@ -121,7 +121,8 @@ docker compose up -d --build
 - **時間帯を渡さないと、日の境目が朝 9時にずれます。** コンテナの既定は UTC です。
   日本以外なら `TZ=America/Los_Angeles docker compose up -d` のように渡します
 - **ほかのマシンに配るウォッチャー**（setup.sh がパッケージの無いマシンに置くもの）は、
-  macOS と Linux（amd64 / arm64）を入れてあります。Windows のぶんはありません（apt で入れたハブと同じ）
+  macOS・Linux（amd64 / arm64）・Windows を入れてあります。Windows のマシンは
+  [Windows で入れる](INSTALL-windows.md) の一式で入れるのが楽です
 - 中では**パッケージが作る `fatmax` ユーザ**で動きます
 
 ## 今の DB を持って行く
