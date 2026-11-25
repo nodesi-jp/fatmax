@@ -1,6 +1,6 @@
 # Windows で入れる（試験版）
 
-**Windows で動いている Claude Code を、LAN にあるハブへ繋ぐ**手順です。いま配っているのは `0.1.172` です。
+**Windows で動いている Claude Code を、LAN にあるハブへ繋ぐ**手順です。いま配っているのは `0.1.175` です。
 
 > **試験版です。** 入れる・入れ直す・外すは PowerShell 7 で確かめてあります。`install.cmd` が使う
 > Windows PowerShell 5.1 は文字コードの扱いが 7 と違うので、その違いには合わせてありますが、
@@ -63,7 +63,7 @@ Expand-Archive fatmax-windows.zip . -Force
 
 1. `fatmax.exe` を `%USERPROFILE%\.fatmax\bin\` に置く（hook はここを見ます。場所は変えられません）
 2. ハブの宛先・指紋・トークンを保存する（`%USERPROFILE%\.fatmax\hub` と `known_hubs`）
-3. hook と OTel を入れる（ハブが配っている `setup.ps1` を `fatmax.exe fetch` で取る。ユーザ全体の `settings.json`）。
+3. hook と OTel と会話担当エージェント（fatmax-room など）を入れる（ハブが配っている `setup.ps1` を `fatmax.exe fetch` で取る。ユーザ全体の `settings.json` と `.claude\agents\`）。
    **取れなければ、ここで止まります**（届かない・指紋かトークンが違う）。
    hook の1行の形は、Claude Code が hook を動かすシェルに合わせます ——
    **Git Bash があれば sh の形、無ければ PowerShell の形**（`hook は … の形で入れます` と出ます）
@@ -161,8 +161,8 @@ Select-String -Path "$HOME\.claude\settings.json.fleet-backup" -Pattern '"Length
 ## Windows ではできないこと
 
 - **画面からの返信と、トークルームへ「本体で参加」は使えません**（`--replies` が macOS / Linux だけのため）
-- **トークルームのエージェント（`fatmax-room`）は入りません。** `setup.ps1` はエージェントの定義を配らないので、
-  「エージェントで参加」も、このマシンでは試していません
+- トークルームの「エージェントで参加」は、install.cmd が置くエージェント定義（`%USERPROFILE%\.claude\agents\fatmax-room.md`）で
+  入れます。**実機ではまだ確かめていません**（エージェントは curl でウォッチャーと話すので、Git Bash が要ります）
 
 ## うまくいかないとき
 
