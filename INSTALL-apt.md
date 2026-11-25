@@ -1,6 +1,6 @@
 # apt で入れる（Ubuntu / Debian）
 
-Ubuntu・Debian（WSL の Ubuntu を含む）に **apt で入れる**手順です。いま配っているのは `0.1.159` です。
+Ubuntu・Debian（WSL の Ubuntu を含む）に **apt で入れる**手順です。いま配っているのは `0.1.160` です。
 CPU（amd64 / arm64）は apt が選びます。署名済みです。
 
 入れるものは1つ（`fatmax` パッケージ）で、**入れたマシンの役目は次のどちらか**です。
