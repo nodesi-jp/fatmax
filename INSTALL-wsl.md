@@ -172,6 +172,7 @@ sudo systemctl restart fatmax-hub        # systemd で動かしている場合
 ## Windows 側
 
 ```powershell
+[Console]::OutputEncoding = [Text.Encoding]::UTF8   # ハブから取る setup.ps1 の日本語を化けさせない
 & ([scriptblock]::Create((& "$HOME\.fatmax\bin\fatmax.exe" fetch /setup.ps1 | Out-String))) -Uninstall
 ```
 

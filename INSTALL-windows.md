@@ -2,8 +2,14 @@
 
 **Windows で動いている Claude Code を、LAN にあるハブへ繋ぐ**手順です。いま配っているのは `0.1.169` です。
 
-> **試験版です。実機の Windows ではまだ確かめていません。** スクリプトが読めて動くところまでは
-> PowerShell 7 で確かめてあります。うまく動かないときは、下の「うまくいかないとき」を見てください。
+> **試験版です。** 入れる・入れ直す・外すは PowerShell 7 で確かめてあります。`install.cmd` が使う
+> Windows PowerShell 5.1 は文字コードの扱いが 7 と違うので、その違いには合わせてありますが、
+> 実機で最後まで通ったことはまだありません。うまく動かないときは、下の「うまくいかないとき」を見てください。
+
+> **0.1.169 より前に入れた（入れ直した）人へ。** 前の版は、入れるときに `settings.json` の
+> **文字列の配列を壊していました**（`"allow": ["Bash(…)"]` が `{"Length": 17}` に、空の配列が `null` に
+> なる）。許可の設定（`permissions`）を書いていた人は、それが効かなくなっています。
+> 下の「[前の版で壊れた settings.json を戻す](#前の版で壊れた-settingsjson-を戻す)」で確かめてください。
 
 Windows に入れるのは **見たいマシン**の役目だけです。**ハブ**（画面と記録を集める1台）は別に要ります。
 
@@ -111,12 +117,39 @@ Set-Content "$HOME\.claude\fatmax-host" '開発機-Win'
 
 ```powershell
 Get-Process fatmax -ErrorAction SilentlyContinue | Stop-Process
+[Console]::OutputEncoding = [Text.Encoding]::UTF8   # ハブから取る setup.ps1 の日本語を化けさせない
 & ([scriptblock]::Create((& "$HOME\.fatmax\bin\fatmax.exe" fetch /setup.ps1 | Out-String))) -Uninstall
 Remove-Item -Recurse -Force "$HOME\.fatmax"
 ```
 
 `settings.json` から fatmax が入れたものだけを外します。あなた自身の設定は残ります。
 最後の行で、まだハブへ送っていない記録（`spool`）も消えます。
+
+## 前の版で壊れた settings.json を戻す
+
+0.1.169 より前の版で入れた（入れ直した）ことがあるなら、まず壊れているかを見ます。
+
+```powershell
+Select-String -Path "$HOME\.claude\settings.json" -Pattern '"Length":|:\s*null'
+```
+
+**何も出なければ壊れていません。** 出たら、入れる前の控え（`settings.json.fleet-backup`）も同じように見ます。
+
+```powershell
+Select-String -Path "$HOME\.claude\settings.json.fleet-backup" -Pattern '"Length":|:\s*null'
+```
+
+- **控えから何も出ない** —— 控えが入れる前の中身です。戻してから、新しい版で入れ直してください
+  （fatmax の設定は入れ直しで付きます）
+
+  ```powershell
+  Copy-Item "$HOME\.claude\settings.json.fleet-backup" "$HOME\.claude\settings.json" -Force
+  ```
+
+  そのあと「1. 一式を落として入れる」をもう一度。
+- **控えからも出る** —— 前の版で2回以上入れたため、控えも壊れた中身で上書きされています。
+  壊れた値（`{"Length": 17}` など）からは元の文字列を取り戻せないので、`Select-String` が指した行を
+  手で書き直してください（`{"Length": …}` は元の配列、`null` は `[]`）。書き直したら入れ直します
 
 ## Windows ではできないこと
 
@@ -133,6 +166,8 @@ Remove-Item -Recurse -Force "$HOME\.fatmax"
 - **「Windows によって PC が保護されました」** —— 署名していないためです。「詳細情報」→「実行」で進めるか、
   上の `irm` で落とし直してください（`install.ps1` は置いた `fatmax.exe` の印を外しています）
 - **「このシステムではスクリプトの実行が無効」** —— `install.ps1` を直に動かしています。`install.cmd` から動かしてください
+- **「代入式が無効です」で止まる**（`[string]$Hub = ''` の行を指している） —— 0.1.167 の一式です
+  （`install.ps1` の先頭に BOM が2つ付いていて、PowerShell が `param(...)` を読めませんでした）。落とし直してください
 - **文字化けして途中で止まる** —— `install.ps1` を開いて保存し直すと壊れます（BOM 付き UTF-8 のままにする必要があります）。落とし直してください
 - **ハブの画面にこのマシンが出ない** —— `& "$HOME\.fatmax\bin\fatmax.exe" status` の `⚠` / `✗` の行に理由が出ます。
   ウォッチャーが止まっていたら、上の `Start-Process` の行で動かしてください
