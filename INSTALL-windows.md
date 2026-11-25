@@ -1,6 +1,6 @@
 # Windows で入れる（試験版）
 
-**Windows で動いている Claude Code を、LAN にあるハブへ繋ぐ**手順です。いま配っているのは `0.1.180` です。
+**Windows で動いている Claude Code を、LAN にあるハブへ繋ぐ**手順です。いま配っているのは `0.1.181` です。
 
 > **試験版です。** 入れる・入れ直す・外すは PowerShell 7 で確かめてあります。`install.cmd` が使う
 > Windows PowerShell 5.1 は文字コードの扱いが 7 と違うので、その違いには合わせてありますが、
