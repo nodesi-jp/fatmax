@@ -42,9 +42,24 @@ OTel の設定を入れます。**`--plugin` を必ず付ける**（settings.jso
 **動いていて版が違うなら、先に止める**（`pkill -f 'fatmax watch'`。口 8788 は1つしか持てないので、止めないと新しいほうが起きられない）。
 **あなたのシェルの中で前に置いて動かさない**（コマンドが終わらず、セッションを閉じると止まる）:
 
-- macOS: `osascript -e 'tell application "Terminal" to do script "fatmax watch || ~/.fatmax/bin/fatmax watch"'`
-- Linux: 人に「別の端末で `fatmax watch` を動かしたままにしてください」と頼む（tmux があれば `tmux new -d -s fatmax 'fatmax watch'`）。
-  **`command -v fatmax` が空なら `~/.fatmax/bin/fatmax watch`** と書いて渡す（パッケージの無いマシン・コンテナは PATH に入っていない）
+起こすのは **`~/.fatmax/bin/fatmax` があればそれ、無ければ `fatmax`**（以下 `<W>`）。hook も先にこちらを使い、setup.sh が
+ハブと同じ版にしてある。PATH の `fatmax` はパッケージの古い版のことがある。
+
+- macOS: `osascript -e 'tell application "Terminal" to do script "<W> watch"'`
+- Linux で tmux があれば: `tmux new -d -s fatmax '<W> watch'`
+- それ以外（Linux・コンテナで tmux が無い）は人に頼む。**頼むときは、説明より先に、この1行だけを出す**:
+
+  ```
+  ▶ 別の端末で起動してください（その端末は開いたままに）:  <W> watch
+  ```
+
+  理由や補足は書かない（読む人が探すのは叩くコマンドだけ）。出したら、**起きるまで自分で待つ**（最長 2 分）:
+
+  ```sh
+  for i in $(seq 1 60); do curl -s --max-time 1 http://127.0.0.1:8788/version >/dev/null && { echo 起きました; break; }; sleep 2; done
+  ```
+
+  起きたら 4. へ進む。2 分で起きなければ、同じ1行をもう一度出して終わる（「起動したら /fatmax:setup をもう一度」と添える）
 - コンテナの中（`/.dockerenv` がある）で `~/.claude/fatmax-host` が無ければ、**名前を付けるよう人に頼む**
   （`echo '<好きな名前>' > ~/.claude/fatmax-host`）。名前は勝手に決めない。付けないと hostname（コンテナの ID）が使われ、
   作り直すたびに別のマシンとして出る
@@ -78,14 +93,14 @@ WSL のウォッチャーがそのまま受けます（WSL が localhost で受�
    ```sh
    S="$TEMP/fatmax-setup-hub.ps1"
    printf '\357\273\277' > "$S"
-   MSYS_NO_PATHCONV=1 wsl.exe -e bash -lc 'F=$(command -v fatmax || echo ~/.fatmax/bin/fatmax); "$F" fetch /setup.ps1' >> "$S"
+   MSYS_NO_PATHCONV=1 wsl.exe -e bash -lc 'F=~/.fatmax/bin/fatmax; [ -x "$F" ] || F=fatmax; "$F" fetch /setup.ps1' >> "$S"
    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$S" -Plugin
    ```
 6. **WSL のウォッチャーを窓で起こす**。もう動いていて版が同じなら何もしない。版が違えば先に止める
    （`MSYS_NO_PATHCONV=1 wsl.exe -e pkill -f 'fatmax watch'`）。transcript は Windows 側の置き場を読ませます:
    ```sh
    WP=$(MSYS_NO_PATHCONV=1 wsl.exe wslpath -u "$USERPROFILE" | tr -d '\r')
-   MSYS_NO_PATHCONV=1 cmd.exe /c start "fatmax watch (WSL)" wsl.exe -e bash -lc "F=\$(command -v fatmax || echo ~/.fatmax/bin/fatmax); \$F watch --projects $WP/.claude/projects"
+   MSYS_NO_PATHCONV=1 cmd.exe /c start "fatmax watch (WSL)" wsl.exe -e bash -lc "F=~/.fatmax/bin/fatmax; [ -x \$F ] || F=fatmax; \$F watch --projects $WP/.claude/projects"
    ```
    窓が1つ開いて、版・宛先・「ハブへ届きます」が出ます。**この窓を閉じるとウォッチャーが止まります。**
 7. **Windows から届くか**: `curl -s --max-time 3 http://127.0.0.1:8788/version` に版が返れば、hook は WSL のウォッチャーに届きます
@@ -93,8 +108,8 @@ WSL のウォッチャーがそのまま受けます（WSL が localhost で受�
 ## 4. 確かめる
 
 ```sh
-fatmax status                      # macOS / Linux（無ければ ~/.fatmax/bin/fatmax status）
-MSYS_NO_PATHCONV=1 wsl.exe -e bash -lc 'F=$(command -v fatmax || echo ~/.fatmax/bin/fatmax); "$F" status'    # Windows（WSL の中のウォッチャー）
+<W> status                         # macOS / Linux（<W> は 3-A で決めたもの）
+MSYS_NO_PATHCONV=1 wsl.exe -e bash -lc 'F=~/.fatmax/bin/fatmax; [ -x "$F" ] || F=fatmax; "$F" status'    # Windows（WSL の中のウォッチャー）
 ```
 
 見るのは: ハブと版が一致しているか／ウォッチャーが動いているか。「通った数 hook 0 件」はまだ正常です。
@@ -104,8 +119,11 @@ MSYS_NO_PATHCONV=1 wsl.exe -e bash -lc 'F=$(command -v fatmax || echo ~/.fatmax/
 ```
 fatmax: ✓ 繋がりました          （だめなら ✗ 繋がっていません: 理由を1行）
   版          このマシン 0.1.N ／ ハブ 0.1.N（一致 / 不一致）
-  ウォッチャー  ✓ 動いています（窓 / 端末 / tmux / WSL の窓）  または  人に起動を頼んだ
-  次          Claude Code を開き直して1回やりとりしたら、fatmax status の「通った数 hook」が 1 以上か見てください
+  ウォッチャー  ✓ 動いています（窓 / 端末 / tmux / WSL の窓）
+  次          Claude Code を開き直して1回やりとりしたら、<W> status の「通った数 hook」が 1 以上か見てください
 ```
 
-Claude Code を開き直すのは、OTel の設定が起動したときにしか読まれないためです。
+- **ウォッチャーが起きていなければ、報告の最初の行を `▶ 別の端末で起動してください（その端末は開いたままに）:  <W> watch` にする**
+  （「✓ 繋がりました」から始めない。動いていないのに繋がったように読める）
+- 「次」の行は、初めて入れたとき（setup.sh を流したとき）だけ。Claude Code を開き直すのは、OTel の設定が起動したときにしか読まれないため
+- 報告のあとに長い説明を足さない。指紋・宛先は聞かれたら答える
