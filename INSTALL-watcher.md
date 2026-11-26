@@ -30,7 +30,7 @@
 | | 先にやること | ウォッチャーの起こし方 |
 |---|---|---|
 | **macOS** | なし | Terminal の窓が1つ開きます |
-| **Linux** | なし | 「別の端末で `fatmax watch` を動かしたままに」と頼まれます。端末をもう1つ開いて叩きます（PATH に無ければ `~/.fatmax/bin/fatmax watch`） |
+| **Linux** | なし | 「▶ 別の端末で起動してください: `~/.fatmax/bin/fatmax watch`」と出ます。端末をもう1つ開いて叩き、開いたままにします（起きたかは `/fatmax:setup` が待って確かめます） |
 | **コンテナ** | **名前を付ける**: `echo 'dev-linux' > ~/.claude/fatmax-host` | Linux と同じ。VS Code ならターミナルをもう1つ開きます |
 | **Windows** | **Git for Windows（Git Bash）と WSL（Ubuntu など）** | WSL の窓が1つ開きます（中で Linux 版が動きます） |
 
@@ -48,7 +48,7 @@
 Claude Code を開き直して1回やりとりしてから:
 
 ```sh
-fatmax status        # 無ければ ~/.fatmax/bin/fatmax status。Windows は WSL の中で叩く
+~/.fatmax/bin/fatmax status     # パッケージ（apt / dnf）だけで入れたマシンは fatmax status。Windows は WSL の中で叩く
 ```
 
 - **「通った数 hook」が 1 以上**なら届いています。ハブの画面の一覧にもそのマシンが出ます
@@ -63,7 +63,7 @@ fatmax status        # 無ければ ~/.fatmax/bin/fatmax status。Windows は WS
 /fatmax:setup
 ```
 
-1行を貼らなくても、前に入れた宛先・指紋・トークンを使うか聞いてきます。macOS / Linux なら端末で `fatmax watch` を叩くだけでも同じです。
+1行を貼らなくても、前に入れた宛先・指紋・トークンを使うか聞いてきます。macOS / Linux なら端末で `~/.fatmax/bin/fatmax watch` を叩くだけでも同じです。
 
 ## 上げる
 
