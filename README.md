@@ -146,11 +146,13 @@ fatmax が**気づかせます**。人間の無駄時間をゼロに近づける
 - **Windows は Git for Windows（Git Bash）と WSL（Ubuntu など）が要ります。** hook は Git Bash で動き、ウォッチャーは
   WSL の中で Linux 版を動かします（署名の無い .exe は Windows に止められることがあるため）。詳しくは [Windows](INSTALL-windows.md)
 - 入れたら Claude Code を開き直し、1回やりとりしてから `fatmax status` の「通った数 hook」が 1 以上か見てください
+- **入れる・確かめる・再起動したあと・上げる・外す は [ウォッチャーを入れる](INSTALL-watcher.md) の1枚にまとめてあります**
 
 **入れ方ごとの手順書**（どれも、入れる → 繋ぐ → 上げる → 外す までを1枚に）:
 
 | 入れ方 | 対象 | ハブ | 見たいマシン |
 |---|---|---|---|
+| **[ウォッチャーを入れる](INSTALL-watcher.md)** | macOS / Linux / コンテナ / Windows（Claude Code のプラグイン） | — | ○ |
 | **[apt](INSTALL-apt.md)** | Ubuntu / Debian（WSL の Ubuntu を含む） | ○ | ○ |
 | **[dnf](INSTALL-dnf.md)** | Amazon Linux 2023 / Fedora / RHEL | ○ | ○ |
 | **[Windows](INSTALL-windows.md)**（試験版） | Windows 10 / 11 | — | ○ |

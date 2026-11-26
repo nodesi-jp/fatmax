@@ -147,7 +147,7 @@ curl -fsSL -k --pinnedpubkey 'sha256//…' 'https://192.168.0.19:8787/setup.sh?t
 
 ## 見たいマシンを繋ぐ
 
-**いちばん楽なのは Claude Code のプラグイン**です（macOS / Linux / Windows / コンテナ共通）。そのマシンの
+**いちばん楽なのは Claude Code のプラグイン**です（macOS / Linux / Windows / コンテナ共通。1枚にまとめたものは **[ウォッチャーを入れる](INSTALL-watcher.md)**）。そのマシンの
 Claude Code で次の4行を打つと、`/fatmax:setup` がウォッチャーを置いて、宛先・指紋・トークンを保存し、ウォッチャーを起こします。
 
 ```

@@ -39,6 +39,7 @@ OTel の設定を入れます。**`--plugin` を必ず付ける**（settings.jso
 付けないとプラグインの hook と2組並んで、全部が2回届きます）。
 
 ウォッチャーを起こす（もう動いていて版が同じなら何もしない: `curl -s --max-time 2 http://127.0.0.1:8788/version`）。
+**動いていて版が違うなら、先に止める**（`pkill -f 'fatmax watch'`。口 8788 は1つしか持てないので、止めないと新しいほうが起きられない）。
 **あなたのシェルの中で前に置いて動かさない**（コマンドが終わらず、セッションを閉じると止まる）:
 
 - macOS: `osascript -e 'tell application "Terminal" to do script "fatmax watch || ~/.fatmax/bin/fatmax watch"'`
@@ -80,7 +81,8 @@ WSL のウォッチャーがそのまま受けます（WSL が localhost で受�
    MSYS_NO_PATHCONV=1 wsl.exe -e bash -lc 'F=$(command -v fatmax || echo ~/.fatmax/bin/fatmax); "$F" fetch /setup.ps1' >> "$S"
    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$S" -Plugin
    ```
-6. **WSL のウォッチャーを窓で起こす**。transcript は Windows 側の置き場を読ませます:
+6. **WSL のウォッチャーを窓で起こす**。もう動いていて版が同じなら何もしない。版が違えば先に止める
+   （`MSYS_NO_PATHCONV=1 wsl.exe -e pkill -f 'fatmax watch'`）。transcript は Windows 側の置き場を読ませます:
    ```sh
    WP=$(MSYS_NO_PATHCONV=1 wsl.exe wslpath -u "$USERPROFILE" | tr -d '\r')
    MSYS_NO_PATHCONV=1 cmd.exe /c start "fatmax watch (WSL)" wsl.exe -e bash -lc "F=\$(command -v fatmax || echo ~/.fatmax/bin/fatmax); \$F watch --projects $WP/.claude/projects"

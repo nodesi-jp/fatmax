@@ -39,6 +39,8 @@ Windows の **Claude Code で**、次の4行を打ちます（PowerShell では�
 /fatmax:setup <ハブの画面の「導入」に出ている1行>
 ```
 
+確かめ方・再起動したあと・上げ方・外し方は **[ウォッチャーを入れる](INSTALL-watcher.md)** にあります（プラグインで入れた場合）。
+
 - `/fatmax:setup` は、**ウォッチャーを WSL（Linux）の中に入れて、窓で起こします**。Windows の fatmax.exe は使いません ——
   署名の無い .exe は、Windows 11 のスマート アプリ コントロールに止められることがあるためです（版を上げるたびに「初めて見る .exe」になる）。
   hook と会話担当エージェント（fatmax-room など）はプラグインが持つので、settings.json には書きません（OTel の設定だけ入ります）
