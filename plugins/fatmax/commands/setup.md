@@ -42,7 +42,11 @@ OTel の設定を入れます。**`--plugin` を必ず付ける**（settings.jso
 **あなたのシェルの中で前に置いて動かさない**（コマンドが終わらず、セッションを閉じると止まる）:
 
 - macOS: `osascript -e 'tell application "Terminal" to do script "fatmax watch || ~/.fatmax/bin/fatmax watch"'`
-- Linux: 人に「別の端末で `fatmax watch` を動かしたままにしてください」と頼む（tmux があれば `tmux new -d -s fatmax 'fatmax watch'`）
+- Linux: 人に「別の端末で `fatmax watch` を動かしたままにしてください」と頼む（tmux があれば `tmux new -d -s fatmax 'fatmax watch'`）。
+  **`command -v fatmax` が空なら `~/.fatmax/bin/fatmax watch`** と書いて渡す（パッケージの無いマシン・コンテナは PATH に入っていない）
+- コンテナの中（`/.dockerenv` がある）で `~/.claude/fatmax-host` が無ければ、**名前を付けるよう人に頼む**
+  （`echo '<好きな名前>' > ~/.claude/fatmax-host`）。名前は勝手に決めない。付けないと hostname（コンテナの ID）が使われ、
+  作り直すたびに別のマシンとして出る
 
 ## 3-B. Windows（ウォッチャーは WSL の中で動かす）
 

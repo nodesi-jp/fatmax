@@ -147,7 +147,25 @@ curl -fsSL -k --pinnedpubkey 'sha256//…' 'https://192.168.0.19:8787/setup.sh?t
 
 ## 見たいマシンを繋ぐ
 
-そのマシンで1回だけ（ハブの画面の「導入」に出ている1行）:
+**いちばん楽なのは Claude Code のプラグイン**です（macOS / Linux / Windows / コンテナ共通）。そのマシンの
+Claude Code で次の4行を打つと、`/fatmax:setup` がウォッチャーを置いて、宛先・指紋・トークンを保存し、ウォッチャーを起こします。
+
+```
+/plugin marketplace add nodesi-jp/fatmax
+/plugin install fatmax@fatmax
+/reload-plugins
+/fatmax:setup <ハブの画面の「導入」に出ている1行>
+```
+
+- **`/reload-plugins` を飛ばすと `/fatmax:setup` が Unknown command になります**
+- **コンテナの中では、先に名前を付けてください**（`echo 'dev-linux' > ~/.claude/fatmax-host`）。付けないと
+  hostname（コンテナの ID）が使われ、作り直すたびに別のマシンとして出ます
+- 窓を開けない Linux（コンテナ・ssh 先）では、`/fatmax:setup` が「別の端末で `fatmax watch` を動かしたままに」と頼んできます。
+  VS Code ならターミナルをもう1つ開いて叩きます
+- 下の `setup.sh` の1行で入れたマシンも、そのまま `/fatmax:setup` で入れ替わります（settings.json の fatmax の hook は外します。
+  2組並ぶと全部が2回届くため）
+
+プラグインを使わないなら、そのマシンで1回だけ（ハブの画面の「導入」に出ている1行）:
 
 ```sh
 curl -fsSL -k --pinnedpubkey '<指紋>' 'https://<ハブの IP>:8787/setup.sh?t=<トークン>' | sh
@@ -179,6 +197,7 @@ curl -fsSL -k --pinnedpubkey '<指紋>' 'https://<ハブの IP>:8787/setup.sh?t=
 
 devcontainer などで、プロンプトが `root@<英数字>:/workspaces#` の形のときです。
 **`sudo` を外す**のと、**名前を付ける**のが普通の手順との違いです。
+（プラグインで入れるなら、名前を付けてから上の4行だけで足ります。下はプラグインを使わない場合）
 
 ```sh
 # 1. apt で入れる（sudo を外しただけ。dnf 系なら上の dnf の2行から sudo を外す）
