@@ -11,13 +11,16 @@
 そのマシンの **Claude Code で4行**打ちます。
 
 ```
-/plugin marketplace add nodesi-jp/fatmax
+/plugin marketplace add nodesi-jp/fatmax#plugin
 /plugin install fatmax@fatmax
 /reload-plugins
 /fatmax:setup <ハブの画面の「導入」に出ている1行>
 ```
 
 - **`/reload-plugins` を飛ばすと `/fatmax:setup` が Unknown command になります**
+- **1行目の `#plugin` を落とさないでください。** 無いと配っている実行ファイルごと（200MB）取り込むことになり、遅い回線では
+  `Unable to create '…/shallow.lock': No such file or directory` で止まります（Claude Code の取り込みが 2 分で切れるため）。
+  前に `#plugin` 無しで足して動いているマシンは、そのままで構いません
 - `/fatmax:setup` が、ウォッチャー（fatmax の実行ファイル）を置き、ハブの宛先・指紋・トークンを保存し、ウォッチャーを起こします。
   hook と会話担当エージェントはプラグインが持っています
 - 終わったら **Claude Code を開き直してください**（OTel の設定は起動したときにしか読まれません）

@@ -136,7 +136,7 @@ fatmax が**気づかせます**。人間の無駄時間をゼロに近づける
 `/fatmax:setup` がウォッチャー（実行ファイル）を置いて、ハブの宛先・指紋・トークンを保存し、ウォッチャーを起こします。
 
 ```
-/plugin marketplace add nodesi-jp/fatmax
+/plugin marketplace add nodesi-jp/fatmax#plugin
 /plugin install fatmax@fatmax
 /reload-plugins
 /fatmax:setup <ハブの画面の「導入」に出ている1行>

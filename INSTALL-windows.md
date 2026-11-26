@@ -33,7 +33,7 @@ Windows に入れるのは **見たいマシン**の役目だけです。**ハ�
 Windows の **Claude Code で**、次の4行を打ちます（PowerShell ではありません。Claude Code の入力欄です）。
 
 ```
-/plugin marketplace add nodesi-jp/fatmax
+/plugin marketplace add nodesi-jp/fatmax#plugin
 /plugin install fatmax@fatmax
 /reload-plugins
 /fatmax:setup <ハブの画面の「導入」に出ている1行>

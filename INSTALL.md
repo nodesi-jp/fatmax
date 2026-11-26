@@ -151,7 +151,7 @@ curl -fsSL -k --pinnedpubkey 'sha256//…' 'https://192.168.0.19:8787/setup.sh?t
 Claude Code で次の4行を打つと、`/fatmax:setup` がウォッチャーを置いて、宛先・指紋・トークンを保存し、ウォッチャーを起こします。
 
 ```
-/plugin marketplace add nodesi-jp/fatmax
+/plugin marketplace add nodesi-jp/fatmax#plugin
 /plugin install fatmax@fatmax
 /reload-plugins
 /fatmax:setup <ハブの画面の「導入」に出ている1行>
